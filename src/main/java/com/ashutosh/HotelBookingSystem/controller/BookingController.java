@@ -2,14 +2,13 @@ package com.ashutosh.HotelBookingSystem.controller;
 
 import com.ashutosh.HotelBookingSystem.dto.BookingResponseDTO;
 import com.ashutosh.HotelBookingSystem.dto.BookingSummaryDTO;
-import com.ashutosh.HotelBookingSystem.dto.HotelBookingResponseDTO;
 import com.ashutosh.HotelBookingSystem.dto.UserBookingResponseDTO;
-import com.ashutosh.HotelBookingSystem.entity.Booking;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -21,10 +20,11 @@ public class BookingController {
 
     @PostMapping
     public BookingResponseDTO bookRoom(@RequestParam Long userId, @RequestParam Long hotelId,
-                                       @RequestParam String roomType, @RequestParam int days,
-                                       @RequestParam int rooms
-                            ){
-        return bookingService.bookRoom(userId, hotelId, roomType, days, rooms);
+                                       @RequestParam String roomType, @RequestParam int rooms,
+                                       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate checkInDate,
+                                       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOutDate
+                                       ){
+        return bookingService.bookRoom(userId, hotelId, roomType,checkInDate,checkOutDate, rooms);
     }
 
     @GetMapping("/user/{userId}")
@@ -36,5 +36,7 @@ public class BookingController {
     public BookingSummaryDTO getBookingSummary(@PathVariable Long bookingId){
         return bookingService.getBookingSummary(bookingId);
     }
+
+
 
 }

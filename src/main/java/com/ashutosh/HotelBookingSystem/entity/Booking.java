@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private int numberOfDays;
+//    private int numberOfDays;
 
     private int numberOfRooms;
 
@@ -27,9 +28,14 @@ public class Booking {
     private String roomType;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     private BookingStatus status;
 
     private LocalDateTime bookingTime;
+
+
+    private LocalDate checkInDate;
+    private LocalDate checkOutDate;
 
     // RelationShip Creation
 

@@ -40,7 +40,12 @@ public class GlobalExceptionHandler {
         }
 
         return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body("Duplicate data found");
+                .status(HttpStatus.CONFLICT).body("Duplicate data found");
     }
+
+    @ExceptionHandler(DataNotFoundException.class)
+        public ResponseEntity<String> handleDataNotFoundException(DataNotFoundException ex){
+            return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+        }
+
 }

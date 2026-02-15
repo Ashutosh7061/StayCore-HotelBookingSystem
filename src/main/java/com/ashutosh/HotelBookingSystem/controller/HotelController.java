@@ -32,4 +32,9 @@ public class HotelController {
     public List<HotelBookingResponseDTO> getHotelBooking(@PathVariable Long hotelId){
         return bookingService.getHotelBookings(hotelId);
     }
+
+    @PutMapping("/{bookingId}/checkout")
+    public String checkout(@PathVariable Long bookingId){
+        return bookingService.checkout((bookingId));
+    }
 }
