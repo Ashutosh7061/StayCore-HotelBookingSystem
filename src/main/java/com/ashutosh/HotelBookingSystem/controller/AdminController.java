@@ -24,6 +24,7 @@ public class AdminController {
         return userService.getAllUsers();
     }
 
+    //
     @GetMapping("/hotels")
     public List<Hotel> getAllHotels(){
         return hotelService.getAllHotels();
