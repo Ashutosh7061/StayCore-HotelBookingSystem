@@ -1,6 +1,7 @@
 package com.ashutosh.HotelBookingSystem.entity;
 
 
+import com.ashutosh.HotelBookingSystem.Enum.RoomStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -22,7 +23,9 @@ public class Room {
     private String roomNumber;
     private String roomType;
     private double price;
-    private String status;
+
+    @Enumerated(EnumType.STRING)
+    private RoomStatus status;
 
     @ManyToOne
     @JoinColumn(name = "hotel_id")

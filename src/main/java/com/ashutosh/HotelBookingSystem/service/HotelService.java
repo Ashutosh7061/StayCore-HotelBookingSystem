@@ -33,7 +33,7 @@ public class HotelService {
             throw new DuplicateDataException("Phone number already exists");
         }
         if (locationExists) {
-            throw new DuplicateDataException("Hotel already exists at this location");
+            throw new DuplicateDataException("This hotel already exists at this location");
         }
         return hotelRepository.save(hotel);
     }

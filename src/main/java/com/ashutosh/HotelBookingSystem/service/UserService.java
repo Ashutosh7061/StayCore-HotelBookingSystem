@@ -23,7 +23,7 @@ public class UserService {
         boolean exists = userRepository.existsByUniqueIdNumber(user.getUniqueIdNumber());
 
         if(exists){
-            throw new DuplicateDataException("This ID number is already registered");
+            throw new DuplicateDataException("This uniqueID number is already registered");
         }
         return userRepository.save(user);
     }
