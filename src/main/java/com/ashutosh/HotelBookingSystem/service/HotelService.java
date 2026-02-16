@@ -1,6 +1,7 @@
 package com.ashutosh.HotelBookingSystem.service;
 
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
+import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
 import com.ashutosh.HotelBookingSystem.exception.DuplicateDataException;
 import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
 import com.ashutosh.HotelBookingSystem.repository.RoomRepository;
@@ -40,6 +41,14 @@ public class HotelService {
 
     public List<Hotel> getAllHotels(){
         return hotelRepository.findAll();
+    }
+
+    public Hotel getHotelWithId(Long hotelId){
+
+        Hotel hotel = hotelRepository.findById(hotelId)
+                .orElseThrow(()-> new DataNotFoundException("Hotel not found for this id"));
+
+        return hotel;
     }
 
 }

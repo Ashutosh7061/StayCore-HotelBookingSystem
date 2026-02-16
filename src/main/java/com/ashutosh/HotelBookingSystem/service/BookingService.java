@@ -11,6 +11,8 @@ import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.entity.Room;
 import com.ashutosh.HotelBookingSystem.entity.User;
 import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
+import com.ashutosh.HotelBookingSystem.exception.DuplicateDataException;
+import com.ashutosh.HotelBookingSystem.exception.InvalidCheckOutDateException;
 import com.ashutosh.HotelBookingSystem.repository.BookingRepository;
 import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
 import com.ashutosh.HotelBookingSystem.repository.RoomRepository;
@@ -41,11 +43,30 @@ public class BookingService {
     @Transactional
     public BookingResponseDTO bookRoom(
             Long userId, Long hotelId, String roomType,
-            LocalDate checkInDate, LocalDate checkOutDate, int noOfRooms
+            LocalDate checkInDate, LocalDate checkOutDate, int noOfRooms,
+            Boolean duplicateBooking
     ){
 
+        // Duplicate booking check
+        List<Booking> existingBookings =
+                bookingRepository
+                        .findByUser_IdAndHotel_IdAndRoomTypeAndCheckInDateAndCheckOutDateAndStatus(
+                                userId,
+                                hotelId,
+                                roomType,
+                                checkInDate,
+                                checkOutDate,
+                                BookingStatus.CONFIRMED
+                        );
+
+        if (!existingBookings.isEmpty() && (duplicateBooking == null || !duplicateBooking)) {
+            throw new DuplicateDataException(
+                    "Same booking already exists. If you want to book again, pass duplicateBooking=true."
+            );
+        }
+
         if(checkOutDate.isBefore(checkInDate) || checkOutDate.isEqual(checkInDate)){
-            throw new RuntimeException("Invalid check-out date");
+            throw new InvalidCheckOutDateException("Invalid check-out date, please provide correct check-out date.");
         }
 
         long days = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
@@ -81,7 +102,6 @@ public class BookingService {
         booking.setUser(user);
         booking.setHotel(hotel);
         booking.setRoomType(roomType);
-//        booking.setNumberOfDays((int)days);
         booking.setNumberOfRooms(noOfRooms);
         booking.setCheckInDate(checkInDate);
         booking.setCheckOutDate(checkOutDate);
@@ -90,7 +110,6 @@ public class BookingService {
         booking.setBookingTime(LocalDateTime.now());
         booking.setAllottedRoomNumber(allottedRooms);
 
-//        return bookingRepository.save(booking);
         Booking savedBooking = bookingRepository.save(booking);
 
         return new BookingResponseDTO(
@@ -113,6 +132,9 @@ public class BookingService {
 
     public List<UserBookingResponseDTO> getUserBookings(Long userId){
 
+        User user = userRepository.findById(userId)
+                .orElseThrow(()->new DataNotFoundException("User not found this given id."));
+
         List<Booking> bookings = bookingRepository.findByUserId(userId);
 
 
@@ -128,7 +150,6 @@ public class BookingService {
                         booking.getHotel().getHotelName(),
                         booking.getHotel().getAddressLine(),
                         booking.getAllottedRoomNumber(),
-//                        booking.getNumberOfDays(),
                         (int) days,
                         booking.getNumberOfRooms(),
                         booking.getTotalPrice(),
@@ -141,6 +162,9 @@ public class BookingService {
 
 
     public List<HotelBookingResponseDTO> getHotelBookings(Long hotelId) {
+
+        Hotel hotel = hotelRepository.findById(hotelId)
+                .orElseThrow(()-> new DataNotFoundException("Hotel not found with id: "+ hotelId));
 
         List<Booking> bookings = bookingRepository.findByHotelId(hotelId);
 
@@ -170,7 +194,7 @@ public class BookingService {
     public BookingSummaryDTO getBookingSummary(Long bookingId){
 
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(()-> new RuntimeException("Booking not found"));
+                .orElseThrow(()-> new DataNotFoundException("Booking not found for this bookingId."));
 
         int days = helperFunctions.calculateDays(booking);
 
@@ -200,10 +224,10 @@ public class BookingService {
     public String checkout(Long bookingId){
 
         Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(()-> new RuntimeException("Booking not found"));
+                .orElseThrow(()-> new DataNotFoundException("Booking not found with this bookingId: "+bookingId));
 
         if(booking.getStatus() == BookingStatus.COMPLETED){
-            throw new RuntimeException("Already checked out");
+            throw new DuplicateDataException("This booking was already checked out.");
         }
 
         booking.setStatus(BookingStatus.COMPLETED);

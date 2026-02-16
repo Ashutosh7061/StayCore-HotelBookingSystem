@@ -22,9 +22,10 @@ public class BookingController {
     public BookingResponseDTO bookRoom(@RequestParam Long userId, @RequestParam Long hotelId,
                                        @RequestParam String roomType, @RequestParam int rooms,
                                        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate checkInDate,
-                                       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOutDate
+                                       @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOutDate,
+                                       @RequestParam(required = false) Boolean duplicateBooking
                                        ){
-        return bookingService.bookRoom(userId, hotelId, roomType,checkInDate,checkOutDate, rooms);
+        return bookingService.bookRoom(userId, hotelId, roomType,checkInDate,checkOutDate, rooms, duplicateBooking);
     }
 
     @GetMapping("/user/{userId}")

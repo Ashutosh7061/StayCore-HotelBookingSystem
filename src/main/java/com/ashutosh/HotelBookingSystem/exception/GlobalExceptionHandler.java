@@ -44,8 +44,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DataNotFoundException.class)
-        public ResponseEntity<String> handleDataNotFoundException(DataNotFoundException ex){
+    public ResponseEntity<String> handleDataNotFoundException(DataNotFoundException ex){
             return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
-        }
+    }
+
+    @ExceptionHandler(InvalidCheckOutDateException.class)
+    public ResponseEntity<String> handleInvalidCheckOutDate(InvalidCheckOutDateException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
 
 }

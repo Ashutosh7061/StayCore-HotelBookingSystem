@@ -6,6 +6,7 @@ import com.ashutosh.HotelBookingSystem.service.HotelService;
 import com.ashutosh.HotelBookingSystem.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,9 +25,14 @@ public class AdminController {
         return userService.getAllUsers();
     }
 
-    //
+
     @GetMapping("/hotels")
     public List<Hotel> getAllHotels(){
         return hotelService.getAllHotels();
+    }
+
+    @GetMapping("/hotel/{hotelId}")
+    public Hotel getHotelWithSpecificId(@PathVariable Long hotelId){
+        return hotelService.getHotelWithId(hotelId);
     }
 }

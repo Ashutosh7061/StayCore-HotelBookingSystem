@@ -2,6 +2,7 @@ package com.ashutosh.HotelBookingSystem.service;
 
 import com.ashutosh.HotelBookingSystem.Enum.IdType;
 import com.ashutosh.HotelBookingSystem.entity.User;
+import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
 import com.ashutosh.HotelBookingSystem.exception.DuplicateDataException;
 import com.ashutosh.HotelBookingSystem.exception.InvalidIdNumberException;
 import com.ashutosh.HotelBookingSystem.repository.UserRepository;
@@ -28,10 +29,12 @@ public class UserService {
         return userRepository.save(user);
     }
 
+
     public User loginUser(String email){
         return userRepository.findByEmail(email)
-                .orElseThrow(()-> new DuplicateDataException("User not found"));
+                .orElseThrow(()-> new DataNotFoundException("User not found for this email Id."));
     }
+
 
     public List<User> getAllUsers(){
         return userRepository.findAll();
