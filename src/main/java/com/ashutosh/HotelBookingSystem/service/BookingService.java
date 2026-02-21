@@ -133,10 +133,13 @@ public class BookingService {
     public List<UserBookingResponseDTO> getUserBookings(Long userId){
 
         User user = userRepository.findById(userId)
-                .orElseThrow(()->new DataNotFoundException("User not found this given id."));
+                .orElseThrow(()->new DataNotFoundException("User not found the given id."));
 
         List<Booking> bookings = bookingRepository.findByUserId(userId);
 
+        if(bookings.isEmpty()){
+            throw new DataNotFoundException("No booking found for this given user id: "+ userId);
+        }
 
         return bookings.stream()
                 .map(booking ->{
@@ -161,12 +164,17 @@ public class BookingService {
     }
 
 
+
     public List<HotelBookingResponseDTO> getHotelBookings(Long hotelId) {
 
         Hotel hotel = hotelRepository.findById(hotelId)
                 .orElseThrow(()-> new DataNotFoundException("Hotel not found with id: "+ hotelId));
 
         List<Booking> bookings = bookingRepository.findByHotelId(hotelId);
+
+        if(bookings.isEmpty()){
+            throw new DataNotFoundException("No booking found for the hotel with id: "+ hotelId);
+        }
 
         return bookings.stream()
                 .map(booking -> {
@@ -198,6 +206,10 @@ public class BookingService {
 
         int days = helperFunctions.calculateDays(booking);
 
+        String fullAddress = booking.getHotel().getAddressLine()+ ", "+
+                booking.getHotel().getCity()+", "+ booking.getHotel().getState()+", "+
+                booking.getHotel().getPinCode();
+
         return new BookingSummaryDTO(
                 booking.getId(),
                 booking.getUser().getId(),
@@ -206,8 +218,7 @@ public class BookingService {
 
                 booking.getHotel().getId(),
                 booking.getHotel().getHotelName(),
-                booking.getHotel().getAddressLine(),
-
+                fullAddress,
                 booking.getAllottedRoomNumber(),
                 days,
                 booking.getNumberOfRooms(),

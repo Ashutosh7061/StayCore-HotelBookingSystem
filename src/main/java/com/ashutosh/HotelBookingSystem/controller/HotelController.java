@@ -2,6 +2,7 @@ package com.ashutosh.HotelBookingSystem.controller;
 
 
 import com.ashutosh.HotelBookingSystem.dto.HotelBookingResponseDTO;
+import com.ashutosh.HotelBookingSystem.dto.HotelResponseDTO;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
 import com.ashutosh.HotelBookingSystem.service.HotelService;
@@ -24,7 +25,7 @@ public class HotelController {
     }
 
     @GetMapping
-    public List<Hotel> getAllHotels(){
+    public List<HotelResponseDTO> getAllHotels(){
         return hotelService.getAllHotels();
     }
 

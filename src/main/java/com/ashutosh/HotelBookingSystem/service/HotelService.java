@@ -1,5 +1,6 @@
 package com.ashutosh.HotelBookingSystem.service;
 
+import com.ashutosh.HotelBookingSystem.dto.HotelResponseDTO;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
 import com.ashutosh.HotelBookingSystem.exception.DuplicateDataException;
@@ -15,7 +16,6 @@ import java.util.List;
 public class HotelService {
 
     private final HotelRepository hotelRepository;
-    private final RoomRepository roomRepository;
 
     public Hotel registerHotel(Hotel hotel){
 
@@ -39,9 +39,24 @@ public class HotelService {
         return hotelRepository.save(hotel);
     }
 
-    public List<Hotel> getAllHotels(){
-        return hotelRepository.findAll();
+    //
+    public List<HotelResponseDTO> getAllHotels(){
+
+        List<Hotel> hotels = hotelRepository.findAll();
+
+        return hotels.stream()
+                .map(hotel ->new HotelResponseDTO(
+                        hotel.getId(),
+                        hotel.getHotelName(),
+                        hotel.getAddressLine(),
+                        hotel.getCity(),
+                        hotel.getState(),
+                        hotel.getPinCode(),
+                        hotel.getContact()
+                ))
+                .toList();
     }
+
 
     public Hotel getHotelWithId(Long hotelId){
 

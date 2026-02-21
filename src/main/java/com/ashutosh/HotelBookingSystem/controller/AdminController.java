@@ -1,7 +1,10 @@
 package com.ashutosh.HotelBookingSystem.controller;
 
+import com.ashutosh.HotelBookingSystem.dto.AdminUserDetailsDTO;
+import com.ashutosh.HotelBookingSystem.dto.HotelResponseDTO;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.entity.User;
+import com.ashutosh.HotelBookingSystem.service.AdminService;
 import com.ashutosh.HotelBookingSystem.service.HotelService;
 import com.ashutosh.HotelBookingSystem.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -19,15 +22,15 @@ public class AdminController {
 
     private final HotelService hotelService;
     private final UserService userService;
+    private final AdminService adminService;
 
     @GetMapping("/users")
-    public List<User> getAllUsers(){
-        return userService.getAllUsers();
+    public List<AdminUserDetailsDTO> getAllUsers(){
+        return adminService.getAllUsersForAdmin();
     }
 
-
     @GetMapping("/hotels")
-    public List<Hotel> getAllHotels(){
+    public List<HotelResponseDTO> getAllHotels(){
         return hotelService.getAllHotels();
     }
 

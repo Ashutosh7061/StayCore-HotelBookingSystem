@@ -3,6 +3,8 @@ package com.ashutosh.HotelBookingSystem.controller;
 import com.ashutosh.HotelBookingSystem.dto.BookingResponseDTO;
 import com.ashutosh.HotelBookingSystem.dto.BookingSummaryDTO;
 import com.ashutosh.HotelBookingSystem.dto.UserBookingResponseDTO;
+import com.ashutosh.HotelBookingSystem.entity.Booking;
+import com.ashutosh.HotelBookingSystem.service.AdminService;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -31,6 +33,7 @@ public class BookingController {
     @GetMapping("/user/{userId}")
     public List<UserBookingResponseDTO> getUserBookings(@PathVariable Long userId){
         return bookingService.getUserBookings(userId);
+//        return  adminService.getAllUsersForAdmin(userId);
     }
 
     @GetMapping("/{bookingId}/summary")

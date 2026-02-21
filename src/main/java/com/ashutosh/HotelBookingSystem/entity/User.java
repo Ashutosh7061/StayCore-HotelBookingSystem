@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(
         name = "users",
@@ -29,6 +31,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(nullable = false, unique = true)
     private String phoneNo;
     private String address;
 
@@ -38,5 +41,12 @@ public class User {
 
     @Column(nullable = false, unique = true)
     private String uniqueIdNumber;
+
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    public void setCreatedAt(){
+        this.createdAt = LocalDateTime.now();
+    }
 
 }
