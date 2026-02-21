@@ -1,9 +1,14 @@
 package com.ashutosh.HotelBookingSystem.service;
 
+import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
+import com.ashutosh.HotelBookingSystem.dto.AdminUserDetailsDTO;
 import com.ashutosh.HotelBookingSystem.dto.HotelResponseDTO;
+import com.ashutosh.HotelBookingSystem.dto.UserHotelResponseDTO;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
+import com.ashutosh.HotelBookingSystem.entity.User;
 import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
 import com.ashutosh.HotelBookingSystem.exception.DuplicateDataException;
+import com.ashutosh.HotelBookingSystem.repository.BookingRepository;
 import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
 import com.ashutosh.HotelBookingSystem.repository.RoomRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +21,7 @@ import java.util.List;
 public class HotelService {
 
     private final HotelRepository hotelRepository;
+    private final BookingRepository bookingRepository;
 
     public Hotel registerHotel(Hotel hotel){
 
@@ -64,6 +70,32 @@ public class HotelService {
                 .orElseThrow(()-> new DataNotFoundException("Hotel not found for this id"));
 
         return hotel;
+    }
+
+
+    public List<UserHotelResponseDTO> getAllUserOfHotelByStatus(Long hotelId, BookingStatus status){
+
+        hotelRepository.findById(hotelId)
+                .orElseThrow(() ->
+                        new DataNotFoundException("Hotel not found with id: " + hotelId)
+                );
+
+        List<User> users =
+                hotelRepository.findUsersByHotelAndStatus(hotelId, status);
+        if (users.isEmpty()) {
+            throw new DataNotFoundException(
+                    "No users found for this hotel with status " + status
+            );
+        }
+        return users.stream()
+                .map(user -> new UserHotelResponseDTO(
+                        user.getId(),
+                        user.getName(),
+                        user.getEmail(),
+                        user.getPhoneNo(),
+                        user.getCreatedAt()
+                ))
+                .toList();
     }
 
 }

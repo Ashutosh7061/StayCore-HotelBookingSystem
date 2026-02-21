@@ -42,4 +42,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             """)
     Long getTotalBookingByUserId(Long userId);
 
+    List<Booking> findByUser_IdAndStatus(Long userId, BookingStatus status);
+
 }

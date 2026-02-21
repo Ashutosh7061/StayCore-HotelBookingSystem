@@ -1,5 +1,6 @@
 package com.ashutosh.HotelBookingSystem.controller;
 
+import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.dto.BookingResponseDTO;
 import com.ashutosh.HotelBookingSystem.dto.BookingSummaryDTO;
 import com.ashutosh.HotelBookingSystem.dto.UserBookingResponseDTO;
@@ -8,6 +9,7 @@ import com.ashutosh.HotelBookingSystem.service.AdminService;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -31,9 +33,13 @@ public class BookingController {
     }
 
     @GetMapping("/user/{userId}")
-    public List<UserBookingResponseDTO> getUserBookings(@PathVariable Long userId){
-        return bookingService.getUserBookings(userId);
-//        return  adminService.getAllUsersForAdmin(userId);
+    public ResponseEntity<List<UserBookingResponseDTO>> getUserBookings(
+            @PathVariable Long userId,
+            @RequestParam(required = false) BookingStatus status){
+
+        return ResponseEntity.ok(
+                bookingService.getUserBookings(userId, status)
+        );
     }
 
     @GetMapping("/{bookingId}/summary")

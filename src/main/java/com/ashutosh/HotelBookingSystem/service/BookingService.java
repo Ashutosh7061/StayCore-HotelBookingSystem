@@ -73,7 +73,6 @@ public class BookingService {
 
         User user = userRepository.findById(userId)
                         .orElseThrow(()-> new DataNotFoundException("User not found."));
-
         Hotel hotel = hotelRepository.findById(hotelId)
                         .orElseThrow(()-> new DataNotFoundException("Hotel not found"));
 
@@ -130,35 +129,46 @@ public class BookingService {
 
     }
 
-    public List<UserBookingResponseDTO> getUserBookings(Long userId){
+    public List<UserBookingResponseDTO> getUserBookings(Long userId, BookingStatus status){
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(()->new DataNotFoundException("User not found the given id."));
+        userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new DataNotFoundException(
+                                "User not found with id: " + userId
+                        )
+                );
 
-        List<Booking> bookings = bookingRepository.findByUserId(userId);
+        List<Booking> bookings;
 
-        if(bookings.isEmpty()){
-            throw new DataNotFoundException("No booking found for this given user id: "+ userId);
+        if (status == null) {
+            bookings = bookingRepository.findByUserId(userId);
+        } else {
+            bookings = bookingRepository
+                    .findByUser_IdAndStatus(userId, status);
         }
 
+        if (bookings.isEmpty()) {
+            throw new DataNotFoundException(
+                    "No bookings found for user id: " + userId
+            );
+        }
         return bookings.stream()
-                .map(booking ->{
-                        int days = (int) ChronoUnit.DAYS.between(
-                                booking.getCheckInDate(),
-                                booking.getCheckOutDate()
-                        );
-
-                return new UserBookingResponseDTO(
-                        booking.getId(),
-                        booking.getHotel().getHotelName(),
-                        booking.getHotel().getAddressLine(),
-                        booking.getAllottedRoomNumber(),
-                        (int) days,
-                        booking.getNumberOfRooms(),
-                        booking.getTotalPrice(),
-                        booking.getStatus().name(),
-                        booking.getBookingTime()
-                );
+                .map(booking -> {
+                    int days = (int) ChronoUnit.DAYS.between(
+                            booking.getCheckInDate(),
+                            booking.getCheckOutDate()
+                    );
+                    return new UserBookingResponseDTO(
+                            booking.getId(),
+                            booking.getHotel().getHotelName(),
+                            booking.getHotel().getAddressLine(),
+                            booking.getAllottedRoomNumber(),
+                            days,
+                            booking.getNumberOfRooms(),
+                            booking.getTotalPrice(),
+                            booking.getStatus().name(),
+                            booking.getBookingTime()
+                    );
                 })
                 .toList();
     }
@@ -256,7 +266,5 @@ public class BookingService {
         }
         return "Checkout successful";
     }
-
-
 
 }

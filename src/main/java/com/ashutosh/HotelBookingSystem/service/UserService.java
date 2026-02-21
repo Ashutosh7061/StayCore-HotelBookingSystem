@@ -20,11 +20,23 @@ public class UserService {
     public User registerUser(User user){
 
         validateGovernmentId(user.getUniqueIdType(), user.getUniqueIdNumber());
-
         boolean exists = userRepository.existsByUniqueIdNumber(user.getUniqueIdNumber());
 
         if(exists){
             throw new DuplicateDataException("This uniqueID number is already registered");
+        }
+
+        boolean phoneNoExists = userRepository.existsByPhoneNo(user.getPhoneNo());
+        boolean emailIdExists = userRepository.existsByEmail(user.getEmail());
+
+        if(emailIdExists && phoneNoExists){
+            throw new DuplicateDataException("Email and Phone number are already registered.");
+        }
+        if(phoneNoExists){
+            throw new DuplicateDataException("This phone number is already registered.");
+        }
+        if(emailIdExists){
+            throw new DuplicateDataException("This email id is already registered.");
         }
         return userRepository.save(user);
     }
@@ -57,6 +69,7 @@ public class UserService {
             }
         }
     }
+
 
 
 }
