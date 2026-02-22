@@ -44,4 +44,14 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByUser_IdAndStatus(Long userId, BookingStatus status);
 
+    @Query("""
+       SELECT b
+       FROM Booking b
+       WHERE b.hotel.id = :hotelId
+       AND b.status = :status
+       """)
+    List<Booking> findBookingsByHotelAndStatus(
+            Long hotelId,
+            BookingStatus status);
+
 }

@@ -58,4 +58,8 @@ public class Booking {
 
     private String cancellationReason;
 
+    private Integer rating;
+
+    private String review;
+
 }

@@ -239,7 +239,7 @@ public class BookingService {
     }
 
     @Transactional
-    public String checkout(Long bookingId){
+    public String checkout(Long bookingId,String review, Integer rating){
 
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(()-> new DataNotFoundException("Booking not found with this bookingId: "+bookingId));
@@ -249,6 +249,8 @@ public class BookingService {
         }
 
         booking.setStatus(BookingStatus.COMPLETED);
+        booking.setReview(review);
+        booking.setRating(rating);
 
         List<String> roomNumber = booking.getAllottedRoomNumber();
         List<Room> rooms = roomRepository.findByHotel_Id(booking.getHotel().getId());
@@ -259,6 +261,64 @@ public class BookingService {
             }
         }
         return "Checkout successful";
+    }
+
+    public List<BaseUserPerHotelResponseDTO> getAllUserOfHotelByStatus(Long hotelId, BookingStatus status){
+
+        hotelRepository.findById(hotelId)
+                .orElseThrow(() ->
+                        new DataNotFoundException("Hotel not found with id: " + hotelId)
+                );
+
+        List<Booking> bookings = bookingRepository.findBookingsByHotelAndStatus(hotelId, status);
+
+        if (bookings.isEmpty()) {
+            throw new DataNotFoundException(
+                    "No booking found for status " + status
+            );
+        }
+        return bookings.stream()
+                .map(booking -> {
+
+                    User user = booking.getUser();
+
+                    if (status == BookingStatus.CANCELLED) {
+
+                        return new CancelledUserPerHotelResponseDTO(
+                                user.getId(),
+                                user.getName(),
+                                user.getEmail(),
+                                user.getPhoneNo(),
+                                user.getCreatedAt(),
+                                booking.getCancelledBy(),
+                                booking.getCancellationReason()
+                        );
+                    }
+
+                    if (status == BookingStatus.COMPLETED) {
+
+                        return new CompletedUserPerHotelResponseDTO(
+                                user.getId(),
+                                user.getName(),
+                                user.getEmail(),
+                                user.getPhoneNo(),
+                                user.getCreatedAt(),
+                                booking.getReview(),
+                                booking.getRating()
+                        );
+                    }
+
+                    // CONFIRMED or others
+                    return new BaseUserPerHotelResponseDTO(
+                            user.getId(),
+                            user.getName(),
+                            user.getEmail(),
+                            user.getPhoneNo(),
+                            user.getCreatedAt()
+                    );
+
+                })
+                .toList();
     }
 
 

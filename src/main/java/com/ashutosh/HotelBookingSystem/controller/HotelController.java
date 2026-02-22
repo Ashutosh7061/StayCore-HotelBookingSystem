@@ -35,7 +35,9 @@ public class HotelController {
     }
 
     @PutMapping("/{bookingId}/checkout")
-    public String checkout(@PathVariable Long bookingId){
-        return bookingService.checkout((bookingId));
+    public String checkout(@PathVariable Long bookingId,
+                           @RequestParam(required = false) String review,
+                           @RequestParam(required = false) Integer rating){
+        return bookingService.checkout(bookingId, review, rating);
     }
 }

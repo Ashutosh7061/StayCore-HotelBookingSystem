@@ -13,11 +13,4 @@ public interface HotelRepository extends JpaRepository<Hotel,Long> {
 
     boolean existsByHotelNameAndAddressLineAndCityAndPinCode(String hotelName, String addressLine, String city, String pinCode);
 
-    @Query("""
-       SELECT DISTINCT b.user 
-       FROM Booking b 
-       WHERE b.hotel.id = :hotelId 
-       AND b.status = :status
-       """)
-    List<User> findUsersByHotelAndStatus(Long hotelId, BookingStatus status);
 }

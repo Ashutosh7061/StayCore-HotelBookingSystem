@@ -3,9 +3,10 @@ package com.ashutosh.HotelBookingSystem.controller;
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.dto.AdminUserDetailsDTO;
 import com.ashutosh.HotelBookingSystem.dto.HotelResponseDTO;
-import com.ashutosh.HotelBookingSystem.dto.GetAllUserPerHotelResponseDTO;
+import com.ashutosh.HotelBookingSystem.dto.BaseUserPerHotelResponseDTO;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.service.AdminService;
+import com.ashutosh.HotelBookingSystem.service.BookingService;
 import com.ashutosh.HotelBookingSystem.service.HotelService;
 import com.ashutosh.HotelBookingSystem.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +21,8 @@ import java.util.List;
 public class AdminController {
 
     private final HotelService hotelService;
-    private final UserService userService;
     private final AdminService adminService;
+    private final BookingService bookingService;
 
     @GetMapping("/users")
     public List<AdminUserDetailsDTO> getAllUsers(){
@@ -39,8 +40,8 @@ public class AdminController {
     }
 
     @GetMapping("/hotel/{hotelId}/allBookings")
-    public ResponseEntity<List<GetAllUserPerHotelResponseDTO>> getAllUserOfHotelByStatus(
+    public ResponseEntity<List<BaseUserPerHotelResponseDTO>> getAllUserOfHotelByStatus(
             @PathVariable Long hotelId, @RequestParam(required = false) BookingStatus status){
-        return ResponseEntity.ok(hotelService.getAllUserOfHotelByStatus(hotelId,status));
+        return ResponseEntity.ok(bookingService.getAllUserOfHotelByStatus(hotelId,status));
     }
 }
