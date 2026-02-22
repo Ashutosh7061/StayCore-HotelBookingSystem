@@ -1,11 +1,9 @@
 package com.ashutosh.HotelBookingSystem.service;
 
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
+import com.ashutosh.HotelBookingSystem.Enum.CancelledBy;
 import com.ashutosh.HotelBookingSystem.Enum.RoomStatus;
-import com.ashutosh.HotelBookingSystem.dto.BookingResponseDTO;
-import com.ashutosh.HotelBookingSystem.dto.BookingSummaryDTO;
-import com.ashutosh.HotelBookingSystem.dto.HotelBookingResponseDTO;
-import com.ashutosh.HotelBookingSystem.dto.UserBookingResponseDTO;
+import com.ashutosh.HotelBookingSystem.dto.*;
 import com.ashutosh.HotelBookingSystem.entity.Booking;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.entity.Room;
@@ -174,7 +172,6 @@ public class BookingService {
     }
 
 
-
     public List<HotelBookingResponseDTO> getHotelBookings(Long hotelId) {
 
         Hotel hotel = hotelRepository.findById(hotelId)
@@ -254,10 +251,7 @@ public class BookingService {
         booking.setStatus(BookingStatus.COMPLETED);
 
         List<String> roomNumber = booking.getAllottedRoomNumber();
-
-        List<Room> rooms = roomRepository.findByHotel_Id(
-                booking.getHotel().getId()
-        );
+        List<Room> rooms = roomRepository.findByHotel_Id(booking.getHotel().getId());
 
         for(Room room : rooms){
             if(roomNumber.contains(room.getRoomNumber())){
@@ -267,4 +261,62 @@ public class BookingService {
         return "Checkout successful";
     }
 
+
+    @Transactional
+    public CancellationResponseDTO cancelBooking(Long bookingId, CancelledBy cancelledBy, String reason){
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(()-> new DataNotFoundException("Booking not found for this given id."));
+
+        if(booking.getStatus() == BookingStatus.CANCELLED){
+            throw new IllegalStateException("Booking already cancelled");
+        }
+
+        if(booking.getStatus() == BookingStatus.COMPLETED){
+            throw new IllegalStateException("Completed booking cannot be cancelled");
+        }
+
+        double deduction = 0;
+        double refund = booking.getTotalPrice();
+
+        if(cancelledBy == CancelledBy.USER){
+            deduction = booking.getTotalPrice() * 0.10;
+            refund = booking.getTotalPrice() - deduction;
+
+            booking.setCancellationReason(null);
+        }
+
+        if(cancelledBy == CancelledBy.HOTEL){
+            if(reason == null || reason.isBlank()){
+                throw new IllegalArgumentException("Cancellation reason requires when hotel cancels booking");
+            }
+            deduction = 0;
+            refund = booking.getTotalPrice();
+            booking.setCancellationReason(reason);
+            //In future credits to be added
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setCancelledBy(cancelledBy);
+
+        List<String> roomNumbers = booking.getAllottedRoomNumber();
+
+        List<Room> rooms = roomRepository.findByHotel_Id(booking.getHotel().getId());
+
+        for(Room room : rooms){
+            if(roomNumbers.contains(room.getRoomNumber())){
+                room.setStatus(RoomStatus.VACENT);
+            }
+        }
+        return new CancellationResponseDTO(
+                booking.getId(),
+                cancelledBy.name(),
+                reason,
+                booking.getTotalPrice(),
+                deduction,
+                refund,
+                booking.getStatus().name()
+        );
+
+    }
 }

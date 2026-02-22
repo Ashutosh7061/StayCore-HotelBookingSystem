@@ -1,6 +1,7 @@
 package com.ashutosh.HotelBookingSystem.entity;
 
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
+import com.ashutosh.HotelBookingSystem.Enum.CancelledBy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -49,5 +50,12 @@ public class Booking {
 
     @ElementCollection
     private List<String> allottedRoomNumber;
+
+    // For cancellation
+
+    @Enumerated(EnumType.STRING)
+    private CancelledBy cancelledBy;
+
+    private String cancellationReason;
 
 }

@@ -1,16 +1,14 @@
 package com.ashutosh.HotelBookingSystem.service;
 
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
-import com.ashutosh.HotelBookingSystem.dto.AdminUserDetailsDTO;
 import com.ashutosh.HotelBookingSystem.dto.HotelResponseDTO;
-import com.ashutosh.HotelBookingSystem.dto.UserHotelResponseDTO;
+import com.ashutosh.HotelBookingSystem.dto.GetAllUserPerHotelResponseDTO;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.entity.User;
 import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
 import com.ashutosh.HotelBookingSystem.exception.DuplicateDataException;
 import com.ashutosh.HotelBookingSystem.repository.BookingRepository;
 import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
-import com.ashutosh.HotelBookingSystem.repository.RoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -73,22 +71,22 @@ public class HotelService {
     }
 
 
-    public List<UserHotelResponseDTO> getAllUserOfHotelByStatus(Long hotelId, BookingStatus status){
+    public List<GetAllUserPerHotelResponseDTO> getAllUserOfHotelByStatus(Long hotelId, BookingStatus status){
 
         hotelRepository.findById(hotelId)
                 .orElseThrow(() ->
                         new DataNotFoundException("Hotel not found with id: " + hotelId)
                 );
 
-        List<User> users =
-                hotelRepository.findUsersByHotelAndStatus(hotelId, status);
+        List<User> users = hotelRepository.findUsersByHotelAndStatus(hotelId, status);
+
         if (users.isEmpty()) {
             throw new DataNotFoundException(
                     "No users found for this hotel with status " + status
             );
         }
         return users.stream()
-                .map(user -> new UserHotelResponseDTO(
+                .map(user -> new GetAllUserPerHotelResponseDTO(
                         user.getId(),
                         user.getName(),
                         user.getEmail(),

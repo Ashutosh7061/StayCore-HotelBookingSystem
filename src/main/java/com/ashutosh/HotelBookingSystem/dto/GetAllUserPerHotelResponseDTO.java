@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserHotelResponseDTO {
+public class GetAllUserPerHotelResponseDTO {
 
     private Long userId;
     private String name;
