@@ -374,6 +374,24 @@ public class BookingService {
                 refund,
                 booking.getStatus().name()
         );
+    }
 
+    public List<AdminBookingDetailsDTO> getCompletedBookingForAdmin(){
+
+        List<Booking> bookings = bookingRepository.findByStatus(BookingStatus.COMPLETED);
+
+        return bookings.stream()
+                .map(booking -> new AdminBookingDetailsDTO(
+                     booking.getId(),
+                     booking.getUser().getId(),
+                     booking.getUser().getName(),
+                     booking.getHotel().getId(),
+                     booking.getHotel().getHotelName(),
+                     booking.getTotalPrice(),
+                     booking.getStatus(),
+                     booking.getRating(),
+                     booking.getReview()
+                ))
+                .toList();
     }
 }

@@ -4,12 +4,15 @@ import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.Enum.RoomStatus;
 import com.ashutosh.HotelBookingSystem.dto.CheckInRequestDTO;
 import com.ashutosh.HotelBookingSystem.dto.CheckInResponseDTO;
+import com.ashutosh.HotelBookingSystem.dto.CheckoutResponseDTO;
 import com.ashutosh.HotelBookingSystem.dto.HotelResponseDTO;
 import com.ashutosh.HotelBookingSystem.entity.Booking;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.entity.Room;
+import com.ashutosh.HotelBookingSystem.exception.BookingCheckoutException;
 import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
 import com.ashutosh.HotelBookingSystem.exception.DuplicateDataException;
+import com.ashutosh.HotelBookingSystem.exception.InvalidRatingException;
 import com.ashutosh.HotelBookingSystem.repository.BookingRepository;
 import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
 import com.ashutosh.HotelBookingSystem.repository.RoomRepository;
@@ -127,18 +130,31 @@ public class HotelService {
     }
 
     @Transactional
-    public String checkout(Long bookingId,String review, Integer rating){
+    public CheckoutResponseDTO checkout(Long bookingId, String review, Integer rating, String roomCondition){
 
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(()-> new DataNotFoundException("Booking not found with this bookingId: "+bookingId));
 
+        if(booking.getStatus() == BookingStatus.CANCELLED){
+            throw new BookingCheckoutException("Cancelled booking cannot be checked out.");
+        }
         if(booking.getStatus() == BookingStatus.COMPLETED){
-            throw new DuplicateDataException("This booking was already checked out.");
+            throw new BookingCheckoutException("This booking was already checked out.");
+        }
+        if(booking.getStatus() != BookingStatus.CONFIRMED){
+            throw new BookingCheckoutException("Only confirmed booking can be checked out");
+        }
+        if(rating != null){
+            if(rating < 1 || rating > 5){
+                throw new InvalidRatingException("Rating must be between 1 and 5.");
+            }
         }
 
         booking.setStatus(BookingStatus.COMPLETED);
         booking.setReview(review);
         booking.setRating(rating);
+        booking.setRoomCondition(roomCondition.toUpperCase());
+        booking.setCheckoutTime(LocalDateTime.now());
 
         List<String> roomNumber = booking.getAllottedRoomNumber();
         List<Room> rooms = roomRepository.findByHotel_Id(booking.getHotel().getId());
@@ -148,7 +164,14 @@ public class HotelService {
                 room.setStatus(RoomStatus.VACENT);
             }
         }
-        return "Checkout successful";
+        return new CheckoutResponseDTO(
+                booking.getId(),
+                booking.getStatus().name(),
+                booking.getRoomCondition(),
+                booking.getRating(),
+                booking.getReview(),
+                booking.getCheckoutTime()
+        );
     }
 
 }

@@ -50,8 +50,18 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
        WHERE b.hotel.id = :hotelId
        AND b.status = :status
        """)
-    List<Booking> findBookingsByHotelAndStatus(
-            Long hotelId,
-            BookingStatus status);
+    List<Booking> findBookingsByHotelAndStatus(Long hotelId, BookingStatus status);
+
+    List<Booking> findByStatus(BookingStatus status);
+
+    List<Booking> findByRatingIsNotNull();
+
+    @Query("""
+       SELECT COALESCE(AVG(b.rating), 0)
+       FROM Booking b
+       WHERE b.hotel.id = :hotelId
+       AND b.rating IS NOT NULL
+       """)
+    Double getAverageRatingByHotelId(Long hotelId);
 
 }

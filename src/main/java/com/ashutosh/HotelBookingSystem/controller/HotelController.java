@@ -1,10 +1,7 @@
 package com.ashutosh.HotelBookingSystem.controller;
 
 
-import com.ashutosh.HotelBookingSystem.dto.CheckInRequestDTO;
-import com.ashutosh.HotelBookingSystem.dto.CheckInResponseDTO;
-import com.ashutosh.HotelBookingSystem.dto.HotelBookingResponseDTO;
-import com.ashutosh.HotelBookingSystem.dto.HotelResponseDTO;
+import com.ashutosh.HotelBookingSystem.dto.*;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
 import com.ashutosh.HotelBookingSystem.service.HotelService;
@@ -38,10 +35,11 @@ public class HotelController {
     }
 
     @PutMapping("/bookings/{bookingId}/checkout")
-    public String checkout(@PathVariable Long bookingId,
-                           @RequestParam(required = false) String review,
-                           @RequestParam(required = false) Integer rating){
-        return hotelService.checkout(bookingId, review, rating);
+    public CheckoutResponseDTO checkout(@PathVariable Long bookingId,
+                                        @RequestParam(required = false) String review,
+                                        @RequestParam(required = false) Integer rating,
+                                        @RequestParam(required = false) String roomCondition){
+        return hotelService.checkout(bookingId, review, rating, roomCondition);
     }
 
     @PostMapping("/check-in")

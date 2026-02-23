@@ -56,5 +56,7 @@ public class Booking {
     // for check-out
     private Integer rating;
     private String review;
+    private LocalDateTime checkoutTime;
+    private String roomCondition;
 
 }

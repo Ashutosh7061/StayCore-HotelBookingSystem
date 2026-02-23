@@ -62,6 +62,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleBookingValidation(BookingValidationException ex){
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
+    @ExceptionHandler(BookingCheckoutException.class)
+    public ResponseEntity<String> handleBookingCheckout(BookingCheckoutException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
 
+    @ExceptionHandler(InvalidRatingException.class)
+    public ResponseEntity<String> handleInvalidRating(InvalidRatingException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
 
 }
