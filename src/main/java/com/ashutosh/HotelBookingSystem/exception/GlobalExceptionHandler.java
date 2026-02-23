@@ -1,5 +1,6 @@
 package com.ashutosh.HotelBookingSystem.exception;
 
+import jakarta.persistence.ElementCollection;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,6 +51,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidCheckOutDateException.class)
     public ResponseEntity<String> handleInvalidCheckOutDate(InvalidCheckOutDateException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InvalidBookingStateException.class)
+    public ResponseEntity<String> handleInvalidState(InvalidBookingStateException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.CONFLICT);
+    }
+    @ExceptionHandler(BookingValidationException.class)
+    public ResponseEntity<String> handleBookingValidation(BookingValidationException ex){
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 

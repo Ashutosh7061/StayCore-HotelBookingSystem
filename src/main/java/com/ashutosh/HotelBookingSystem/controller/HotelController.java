@@ -1,12 +1,15 @@
 package com.ashutosh.HotelBookingSystem.controller;
 
 
+import com.ashutosh.HotelBookingSystem.dto.CheckInRequestDTO;
+import com.ashutosh.HotelBookingSystem.dto.CheckInResponseDTO;
 import com.ashutosh.HotelBookingSystem.dto.HotelBookingResponseDTO;
 import com.ashutosh.HotelBookingSystem.dto.HotelResponseDTO;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
 import com.ashutosh.HotelBookingSystem.service.HotelService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,10 +37,15 @@ public class HotelController {
         return bookingService.getHotelBookings(hotelId);
     }
 
-    @PutMapping("/{bookingId}/checkout")
+    @PutMapping("/bookings/{bookingId}/checkout")
     public String checkout(@PathVariable Long bookingId,
                            @RequestParam(required = false) String review,
                            @RequestParam(required = false) Integer rating){
-        return bookingService.checkout(bookingId, review, rating);
+        return hotelService.checkout(bookingId, review, rating);
+    }
+
+    @PostMapping("/check-in")
+    public ResponseEntity<CheckInResponseDTO> checkIn(@RequestBody CheckInRequestDTO request){
+        return ResponseEntity.ok(hotelService.checkIn(request));
     }
 }

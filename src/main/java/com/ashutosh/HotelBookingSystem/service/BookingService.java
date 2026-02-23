@@ -8,9 +8,7 @@ import com.ashutosh.HotelBookingSystem.entity.Booking;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.entity.Room;
 import com.ashutosh.HotelBookingSystem.entity.User;
-import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
-import com.ashutosh.HotelBookingSystem.exception.DuplicateDataException;
-import com.ashutosh.HotelBookingSystem.exception.InvalidCheckOutDateException;
+import com.ashutosh.HotelBookingSystem.exception.*;
 import com.ashutosh.HotelBookingSystem.repository.BookingRepository;
 import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
 import com.ashutosh.HotelBookingSystem.repository.RoomRepository;
@@ -66,6 +64,9 @@ public class BookingService {
         if(checkOutDate.isBefore(checkInDate) || checkOutDate.isEqual(checkInDate)){
             throw new InvalidCheckOutDateException("Invalid check-out date, please provide correct check-out date.");
         }
+        if(checkInDate.isBefore(LocalDate.now())){
+            throw new InvalidCheckOutDateException("Check-in date must be valid");
+        }
 
         long days = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
 
@@ -91,7 +92,7 @@ public class BookingService {
         for(int i = 0 ; i < noOfRooms ; i++){
             Room room = availableRooms.get(i);
             room.setStatus(RoomStatus.BOOKED);
-            allottedRooms.add(room.getRoomNumber());
+//            allottedRooms.add(room.getRoomNumber());
         }
 
         Booking booking = new Booking();
@@ -111,11 +112,9 @@ public class BookingService {
 
         return new BookingResponseDTO(
                 savedBooking.getId(),
-                user.getId(),
-                user.getName(),
                 hotel.getId(),
                 hotel.getHotelName(),
-                allottedRooms,
+//                allottedRooms,
                 (int)days,
                 noOfRooms,
                 savedBooking.getCheckInDate(),
@@ -238,30 +237,6 @@ public class BookingService {
         );
     }
 
-    @Transactional
-    public String checkout(Long bookingId,String review, Integer rating){
-
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(()-> new DataNotFoundException("Booking not found with this bookingId: "+bookingId));
-
-        if(booking.getStatus() == BookingStatus.COMPLETED){
-            throw new DuplicateDataException("This booking was already checked out.");
-        }
-
-        booking.setStatus(BookingStatus.COMPLETED);
-        booking.setReview(review);
-        booking.setRating(rating);
-
-        List<String> roomNumber = booking.getAllottedRoomNumber();
-        List<Room> rooms = roomRepository.findByHotel_Id(booking.getHotel().getId());
-
-        for(Room room : rooms){
-            if(roomNumber.contains(room.getRoomNumber())){
-                room.setStatus(RoomStatus.VACENT);
-            }
-        }
-        return "Checkout successful";
-    }
 
     public List<BaseUserPerHotelResponseDTO> getAllUserOfHotelByStatus(Long hotelId, BookingStatus status){
 
@@ -329,26 +304,48 @@ public class BookingService {
                 .orElseThrow(()-> new DataNotFoundException("Booking not found for this given id."));
 
         if(booking.getStatus() == BookingStatus.CANCELLED){
-            throw new IllegalStateException("Booking already cancelled");
+            throw new InvalidBookingStateException("Booking already cancelled");
         }
 
         if(booking.getStatus() == BookingStatus.COMPLETED){
-            throw new IllegalStateException("Completed booking cannot be cancelled");
+            throw new InvalidBookingStateException("Completed booking cannot be cancelled");
         }
 
         double deduction = 0;
         double refund = booking.getTotalPrice();
 
         if(cancelledBy == CancelledBy.USER){
-            deduction = booking.getTotalPrice() * 0.10;
-            refund = booking.getTotalPrice() - deduction;
+
+            LocalDate today = LocalDate.now();
+            LocalDate checkInDate = booking.getCheckInDate();
+
+            long daysBetween = ChronoUnit.DAYS.between(today, checkInDate);
+            double deductionPercentage;
+
+            if(daysBetween < 0){
+                throw new InvalidBookingStateException("Cannot cancel after check-in date");
+            }
+
+            if(daysBetween <= 0){
+                deductionPercentage = 0.50;
+            }
+            else if(daysBetween <= 3){
+                deductionPercentage = 0.15;
+            }
+            else{
+                deductionPercentage = 0.0;
+            }
+
+            double totalPrice = booking.getTotalPrice();
+            deduction = totalPrice * deductionPercentage;
+            refund = totalPrice - deduction;
 
             booking.setCancellationReason(null);
         }
 
         if(cancelledBy == CancelledBy.HOTEL){
             if(reason == null || reason.isBlank()){
-                throw new IllegalArgumentException("Cancellation reason requires when hotel cancels booking");
+                throw new BookingValidationException("Cancellation reason requires when hotel cancels booking");
             }
             deduction = 0;
             refund = booking.getTotalPrice();

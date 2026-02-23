@@ -20,12 +20,8 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-//    private int numberOfDays;
-
     private int numberOfRooms;
-
     private double totalPrice;
-
     private String roomType;
 
     @Enumerated(EnumType.STRING)
@@ -33,7 +29,6 @@ public class Booking {
     private BookingStatus status;
 
     private LocalDateTime bookingTime;
-
 
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
@@ -58,8 +53,8 @@ public class Booking {
 
     private String cancellationReason;
 
+    // for check-out
     private Integer rating;
-
     private String review;
 
 }

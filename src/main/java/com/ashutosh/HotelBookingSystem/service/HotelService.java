@@ -1,17 +1,24 @@
 package com.ashutosh.HotelBookingSystem.service;
 
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
+import com.ashutosh.HotelBookingSystem.Enum.RoomStatus;
+import com.ashutosh.HotelBookingSystem.dto.CheckInRequestDTO;
+import com.ashutosh.HotelBookingSystem.dto.CheckInResponseDTO;
 import com.ashutosh.HotelBookingSystem.dto.HotelResponseDTO;
-import com.ashutosh.HotelBookingSystem.dto.BaseUserPerHotelResponseDTO;
+import com.ashutosh.HotelBookingSystem.entity.Booking;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
-import com.ashutosh.HotelBookingSystem.entity.User;
+import com.ashutosh.HotelBookingSystem.entity.Room;
 import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
 import com.ashutosh.HotelBookingSystem.exception.DuplicateDataException;
 import com.ashutosh.HotelBookingSystem.repository.BookingRepository;
 import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
+import com.ashutosh.HotelBookingSystem.repository.RoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -20,6 +27,7 @@ public class HotelService {
 
     private final HotelRepository hotelRepository;
     private final BookingRepository bookingRepository;
+    private final RoomRepository roomRepository;
 
     public Hotel registerHotel(Hotel hotel){
 
@@ -68,6 +76,79 @@ public class HotelService {
                 .orElseThrow(()-> new DataNotFoundException("Hotel not found for this id"));
 
         return hotel;
+    }
+
+    @Transactional
+    public CheckInResponseDTO checkIn(CheckInRequestDTO request){
+        Booking booking = bookingRepository.findById(request.getBookingId())
+                .orElseThrow(()-> new DataNotFoundException("Booking not found."));
+
+        // verifying user identity
+        if(!booking.getUser().getId().equals(request.getUserId())){
+            throw new IllegalArgumentException("User mismatch");
+        }
+
+        if(!booking.getUser().getUniqueIdNumber().equals(request.getUniqueIdNumber())){
+            throw new  IllegalArgumentException("Invalid ID proof");
+        }
+        if(booking.getStatus() != BookingStatus.CONFIRMED){
+            throw new IllegalStateException("Booking not eligible for check-in");
+        }
+        if(!booking.getAllottedRoomNumber().isEmpty()){
+            throw new IllegalStateException("Already checked in");
+        }
+
+        List<Room> bookedRooms = roomRepository.findByHotel_IdAndRoomTypeAndStatus(
+                booking.getHotel().getId(),
+                booking.getRoomType(),
+                RoomStatus.BOOKED
+        );
+
+        if(bookedRooms.size() < booking.getNumberOfRooms()){
+            throw new IllegalStateException("Rooms not available for check-in");
+        }
+
+        List<String> assignedRoom = new ArrayList<>();
+
+        for(int i = 0 ; i < booking.getNumberOfRooms(); i++){
+            Room room = bookedRooms.get(i);
+            room.setStatus(RoomStatus.OCCUPIED);
+            assignedRoom.add(room.getRoomNumber());
+        }
+
+        booking.setAllottedRoomNumber(assignedRoom);
+
+        return new CheckInResponseDTO(
+                booking.getId(),
+                booking.getUser().getName(),
+                assignedRoom,
+                LocalDateTime.now()
+        );
+    }
+
+    @Transactional
+    public String checkout(Long bookingId,String review, Integer rating){
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(()-> new DataNotFoundException("Booking not found with this bookingId: "+bookingId));
+
+        if(booking.getStatus() == BookingStatus.COMPLETED){
+            throw new DuplicateDataException("This booking was already checked out.");
+        }
+
+        booking.setStatus(BookingStatus.COMPLETED);
+        booking.setReview(review);
+        booking.setRating(rating);
+
+        List<String> roomNumber = booking.getAllottedRoomNumber();
+        List<Room> rooms = roomRepository.findByHotel_Id(booking.getHotel().getId());
+
+        for(Room room : rooms){
+            if(roomNumber.contains(room.getRoomNumber())){
+                room.setStatus(RoomStatus.VACENT);
+            }
+        }
+        return "Checkout successful";
     }
 
 }

@@ -25,6 +25,7 @@ public class Room {
     private double price;
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     private RoomStatus status;
 
     @ManyToOne
