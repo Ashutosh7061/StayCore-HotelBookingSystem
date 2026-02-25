@@ -1,6 +1,5 @@
 package com.ashutosh.HotelBookingSystem.exception;
 
-import jakarta.persistence.ElementCollection;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -70,6 +69,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidRatingException.class)
     public ResponseEntity<String> handleInvalidRating(InvalidRatingException ex){
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(BookingCheckInException.class)
+    public ResponseEntity<String> handleEarlierCheckInDate(BookingCheckInException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.CONFLICT);
     }
 
 }

@@ -9,10 +9,7 @@ import com.ashutosh.HotelBookingSystem.dto.HotelResponseDTO;
 import com.ashutosh.HotelBookingSystem.entity.Booking;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.entity.Room;
-import com.ashutosh.HotelBookingSystem.exception.BookingCheckoutException;
-import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
-import com.ashutosh.HotelBookingSystem.exception.DuplicateDataException;
-import com.ashutosh.HotelBookingSystem.exception.InvalidRatingException;
+import com.ashutosh.HotelBookingSystem.exception.*;
 import com.ashutosh.HotelBookingSystem.repository.BookingRepository;
 import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
 import com.ashutosh.HotelBookingSystem.repository.RoomRepository;
@@ -20,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +29,7 @@ public class HotelService {
     private final HotelRepository hotelRepository;
     private final BookingRepository bookingRepository;
     private final RoomRepository roomRepository;
+    private final CommissionService commissionService;
 
     public Hotel registerHotel(Hotel hotel){
 
@@ -51,6 +50,7 @@ public class HotelService {
         if (locationExists) {
             throw new DuplicateDataException("This hotel already exists at this location");
         }
+
         return hotelRepository.save(hotel);
     }
 
@@ -86,13 +86,17 @@ public class HotelService {
         Booking booking = bookingRepository.findById(request.getBookingId())
                 .orElseThrow(()-> new DataNotFoundException("Booking not found."));
 
+        LocalDate today = LocalDate.now();
+        LocalDate checkInDate = booking.getCheckInDate();
+        if(today.isBefore(checkInDate)|| today.isAfter(checkInDate) ){
+            throw new BookingCheckInException("Check-in is allowed only on check-in date or between booking dates.");
+        }
         // verifying user identity
         if(!booking.getUser().getId().equals(request.getUserId())){
             throw new IllegalArgumentException("User mismatch");
         }
-
         if(!booking.getUser().getUniqueIdNumber().equals(request.getUniqueIdNumber())){
-            throw new  IllegalArgumentException("Invalid ID proof");
+            throw new InvalidIdNumberException("Invalid ID proof");
         }
         if(booking.getStatus() != BookingStatus.CONFIRMED){
             throw new IllegalStateException("Booking not eligible for check-in");
@@ -164,6 +168,10 @@ public class HotelService {
                 room.setStatus(RoomStatus.VACENT);
             }
         }
+
+        commissionService.addBookingCommission(booking,booking.getHotel());
+
+
         return new CheckoutResponseDTO(
                 booking.getId(),
                 booking.getStatus().name(),

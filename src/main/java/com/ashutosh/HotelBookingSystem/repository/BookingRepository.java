@@ -64,4 +64,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
        """)
     Double getAverageRatingByHotelId(Long hotelId);
 
+    Long countByStatus(BookingStatus status);
+
 }

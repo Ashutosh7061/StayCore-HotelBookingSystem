@@ -1,10 +1,7 @@
 package com.ashutosh.HotelBookingSystem.controller;
 
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
-import com.ashutosh.HotelBookingSystem.dto.AdminBookingDetailsDTO;
-import com.ashutosh.HotelBookingSystem.dto.AdminUserDetailsDTO;
-import com.ashutosh.HotelBookingSystem.dto.HotelResponseDTO;
-import com.ashutosh.HotelBookingSystem.dto.BaseUserPerHotelResponseDTO;
+import com.ashutosh.HotelBookingSystem.dto.*;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.service.AdminService;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
@@ -36,8 +33,8 @@ public class AdminController {
     }
 
     @GetMapping("/hotel/{hotelId}")
-    public Hotel getHotelWithSpecificId(@PathVariable Long hotelId){
-        return hotelService.getHotelWithId(hotelId);
+    public ResponseEntity<AdminHotelDetailsDTO> getHotelWithSpecificId(@PathVariable Long hotelId){
+        return ResponseEntity.ok(adminService.getAdminHotelDetails(hotelId));
     }
 
     @GetMapping("/hotel/{hotelId}/users")
@@ -49,5 +46,10 @@ public class AdminController {
     @GetMapping("/completed-bookings")
     public List<AdminBookingDetailsDTO> getCompletedBookings(){
         return bookingService.getCompletedBookingForAdmin();
+    }
+
+    @GetMapping("/dashboard")
+    public PlatformDashboardDTO getDashBoard(){
+        return adminService.getPlatformDashboard();
     }
 }

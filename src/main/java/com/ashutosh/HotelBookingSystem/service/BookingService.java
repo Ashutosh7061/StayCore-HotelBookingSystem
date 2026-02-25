@@ -34,6 +34,7 @@ public class BookingService {
     private final RoomRepository roomRepository;
     private final HotelRepository hotelRepository;
     private final UserRepository userRepository;
+    private final CommissionService commissionService;
 
 
     @Transactional

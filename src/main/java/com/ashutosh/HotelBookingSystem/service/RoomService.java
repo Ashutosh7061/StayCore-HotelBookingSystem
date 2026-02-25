@@ -17,6 +17,7 @@ public class RoomService {
 
     private final RoomRepository roomRepository;
     private final HotelRepository hotelRepository;
+    private final CommissionService commissionService;
 
     public Room addRoom(Long hotelId,Room room){
 
@@ -29,6 +30,10 @@ public class RoomService {
         }
 
         room.setHotel(hotel);
+
+        Room savedRoom = roomRepository.save(room);
+
+        commissionService.addRoomRegistrationCommissionFee(hotel);
 
         return roomRepository.save(room);
     }
