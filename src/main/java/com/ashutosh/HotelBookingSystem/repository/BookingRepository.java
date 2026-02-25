@@ -66,4 +66,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     Long countByStatus(BookingStatus status);
 
+    long countByHotelId(Long hotelId);
+
+    long countByHotelIdAndStatus(Long hotelId, BookingStatus status);
+
 }

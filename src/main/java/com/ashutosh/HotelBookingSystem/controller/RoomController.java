@@ -1,5 +1,6 @@
 package com.ashutosh.HotelBookingSystem.controller;
 
+import com.ashutosh.HotelBookingSystem.dto.AdminRoomDTO;
 import com.ashutosh.HotelBookingSystem.entity.Room;
 import com.ashutosh.HotelBookingSystem.service.RoomService;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +20,8 @@ public class RoomController {
         return roomService.addRoom(hotelId,room);
     }
 
-    @GetMapping("/hotel/{hotelId}")
-    public List<Room> getRooms(@PathVariable Long hotelId){
+    @GetMapping("/hotel/{hotelId}/allRooms")
+    public List<AdminRoomDTO> getRooms(@PathVariable Long hotelId){
         return roomService.getRoomsByHotel(hotelId);
     }
 }

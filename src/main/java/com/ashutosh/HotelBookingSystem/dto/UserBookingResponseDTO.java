@@ -16,7 +16,7 @@ public class UserBookingResponseDTO {
 
     private Long bookingId;
     private String hotelName;
-    private String hotelAddress;
+    private AddressDTO address;
     private List<String> allottedRoomNumber;
     private int numberOfRooms;
     private int numberOfDays;

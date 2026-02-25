@@ -2,11 +2,10 @@ package com.ashutosh.HotelBookingSystem.controller;
 
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.dto.*;
-import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.service.AdminService;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
 import com.ashutosh.HotelBookingSystem.service.HotelService;
-import com.ashutosh.HotelBookingSystem.service.UserService;
+import com.ashutosh.HotelBookingSystem.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +20,7 @@ public class AdminController {
     private final HotelService hotelService;
     private final AdminService adminService;
     private final BookingService bookingService;
+    private final RoomService roomService;
 
     @GetMapping("/users")
     public List<AdminUserDetailsDTO> getAllUsers(){
@@ -33,8 +33,8 @@ public class AdminController {
     }
 
     @GetMapping("/hotel/{hotelId}")
-    public ResponseEntity<AdminHotelDetailsDTO> getHotelWithSpecificId(@PathVariable Long hotelId){
-        return ResponseEntity.ok(adminService.getAdminHotelDetails(hotelId));
+    public ResponseEntity<AdminHotelDetailsDTO> getSpecificHotel(@PathVariable Long hotelId){
+        return ResponseEntity.ok(adminService.getSpecificHotelDetails(hotelId));
     }
 
     @GetMapping("/hotel/{hotelId}/users")
@@ -51,5 +51,10 @@ public class AdminController {
     @GetMapping("/dashboard")
     public PlatformDashboardDTO getDashBoard(){
         return adminService.getPlatformDashboard();
+    }
+
+    @GetMapping("/hotel/{hotelId}/allRooms")
+    public List<AdminRoomDTO> getRooms(@PathVariable Long hotelId){
+        return roomService.getRoomsByHotel(hotelId);
     }
 }

@@ -33,7 +33,7 @@ public class BookingController {
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<UserBookingResponseDTO>> getUserBookings(
+    public ResponseEntity<List<UserBookingResponseDTO>> getIndividualUserBookings(
             @PathVariable Long userId,
             @RequestParam(required = false) BookingStatus status){
 

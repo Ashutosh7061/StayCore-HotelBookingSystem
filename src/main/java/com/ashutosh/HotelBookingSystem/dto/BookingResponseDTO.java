@@ -17,13 +17,8 @@ public class BookingResponseDTO {
 
     private Long bookingId;
 
-//    private Long userId;
-//    private String userName;
-
     private Long hotelId;
     private String hotelName;
-
-//    private List<String> allottedRoomNumber;
 
     private int numberOfDays;
     private int numberOfRooms;

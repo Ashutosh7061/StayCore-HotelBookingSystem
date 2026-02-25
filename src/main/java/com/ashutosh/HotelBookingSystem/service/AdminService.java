@@ -2,6 +2,7 @@ package com.ashutosh.HotelBookingSystem.service;
 
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.Enum.CommissionType;
+import com.ashutosh.HotelBookingSystem.dto.AddressDTO;
 import com.ashutosh.HotelBookingSystem.dto.AdminHotelDetailsDTO;
 import com.ashutosh.HotelBookingSystem.dto.AdminUserDetailsDTO;
 import com.ashutosh.HotelBookingSystem.dto.PlatformDashboardDTO;
@@ -13,10 +14,12 @@ import com.ashutosh.HotelBookingSystem.repository.CommissionRepository;
 import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
 import com.ashutosh.HotelBookingSystem.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminService {
@@ -51,7 +54,13 @@ public class AdminService {
                 .toList();
     }
 
-    public AdminHotelDetailsDTO getAdminHotelDetails(Long hotelId) {
+    public AdminHotelDetailsDTO getSpecificHotelDetails(Long hotelId) {
+
+        Long totalBooking = (Long)bookingRepository.countByHotelId(hotelId);
+
+        long completedBookings = bookingRepository.countByHotelIdAndStatus(hotelId,BookingStatus.COMPLETED);
+        long cancelledBooking = bookingRepository.countByHotelIdAndStatus(hotelId, BookingStatus.CANCELLED);
+        long confirmedBookings  = bookingRepository.countByHotelIdAndStatus(hotelId, BookingStatus.CONFIRMED);
 
         Hotel hotel = hotelRepository.findById(hotelId)
                 .orElseThrow(() -> new DataNotFoundException("Hotel not found"));
@@ -66,11 +75,22 @@ public class AdminService {
                 commissionRepository.getCommissionByHotelIdAndType(
                         hotelId, CommissionType.REGISTRATION);
 
+        AddressDTO addressDTO = new AddressDTO(
+                hotel.getAddressLine(),
+                hotel.getCity(),
+                hotel.getState(),
+                hotel.getPinCode()
+        );
+
         return new AdminHotelDetailsDTO(
                 hotel.getId(),
                 hotel.getHotelName(),
                 hotel.getAddressLine(),
-                hotel.getContact(),
+                addressDTO,
+                totalBooking,
+                completedBookings,
+                cancelledBooking,
+                confirmedBookings,
                 totalCommission,
                 bookingCommission,
                 registrationCommission

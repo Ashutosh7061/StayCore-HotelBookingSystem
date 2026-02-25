@@ -156,10 +156,17 @@ public class BookingService {
                             booking.getCheckInDate(),
                             booking.getCheckOutDate()
                     );
+                    AddressDTO addressDTO = new AddressDTO(
+                            booking.getHotel().getAddressLine(),
+                            booking.getHotel().getCity(),
+                            booking.getHotel().getState(),
+                            booking.getHotel().getPinCode()
+                    );
+
                     return new UserBookingResponseDTO(
                             booking.getId(),
                             booking.getHotel().getHotelName(),
-                            booking.getHotel().getAddressLine(),
+                            addressDTO,
                             booking.getAllottedRoomNumber(),
                             days,
                             booking.getNumberOfRooms(),

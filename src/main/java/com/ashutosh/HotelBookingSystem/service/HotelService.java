@@ -2,10 +2,7 @@ package com.ashutosh.HotelBookingSystem.service;
 
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.Enum.RoomStatus;
-import com.ashutosh.HotelBookingSystem.dto.CheckInRequestDTO;
-import com.ashutosh.HotelBookingSystem.dto.CheckInResponseDTO;
-import com.ashutosh.HotelBookingSystem.dto.CheckoutResponseDTO;
-import com.ashutosh.HotelBookingSystem.dto.HotelResponseDTO;
+import com.ashutosh.HotelBookingSystem.dto.*;
 import com.ashutosh.HotelBookingSystem.entity.Booking;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.entity.Room;
@@ -54,21 +51,26 @@ public class HotelService {
         return hotelRepository.save(hotel);
     }
 
-    //
-    public List<HotelResponseDTO> getAllHotels(){
 
+    public List<HotelResponseDTO> getAllHotels() {
         List<Hotel> hotels = hotelRepository.findAll();
 
         return hotels.stream()
-                .map(hotel ->new HotelResponseDTO(
-                        hotel.getId(),
-                        hotel.getHotelName(),
-                        hotel.getAddressLine(),
-                        hotel.getCity(),
-                        hotel.getState(),
-                        hotel.getPinCode(),
-                        hotel.getContact()
-                ))
+                .map(hotel -> {
+
+                    AddressDTO addressDTO = new AddressDTO(
+                            hotel.getAddressLine(),
+                            hotel.getCity(),
+                            hotel.getState(),
+                            hotel.getPinCode()
+                    );
+                    return new HotelResponseDTO(
+                            hotel.getId(),
+                            hotel.getHotelName(),
+                            addressDTO,
+                            hotel.getContact()
+                    );
+                })
                 .toList();
     }
 
