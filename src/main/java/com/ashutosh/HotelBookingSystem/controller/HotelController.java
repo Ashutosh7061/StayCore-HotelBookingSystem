@@ -2,9 +2,10 @@ package com.ashutosh.HotelBookingSystem.controller;
 
 
 import com.ashutosh.HotelBookingSystem.dto.*;
-import com.ashutosh.HotelBookingSystem.entity.Hotel;
+import com.ashutosh.HotelBookingSystem.entity.Room;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
 import com.ashutosh.HotelBookingSystem.service.HotelService;
+import com.ashutosh.HotelBookingSystem.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,25 +13,27 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/hotels")
+@RequestMapping("/hotel")
 @RequiredArgsConstructor
 public class HotelController {
 
     private final HotelService hotelService;
     private final BookingService bookingService;
+    private final RoomService roomService;
 
-    @PostMapping("/registerHotel")
-    public Hotel registerHotel(@RequestBody Hotel hotel){
-        return hotelService.registerHotel(hotel);
+
+    @PostMapping("/{hotelId}/addRoom")
+    public Room addRoom(@PathVariable Long hotelId, @RequestBody Room room){
+        return roomService.addRoom(hotelId,room);
     }
 
-    @GetMapping
-    public List<HotelResponseDTO> getAllHotels(){
-        return hotelService.getAllHotels();
-    }
+//    @GetMapping
+//    public List<HotelResponseDTO> getAllHotels(){
+//        return hotelService.getAllHotels();
+//    }
 
     @GetMapping("/{hotelId}/bookings")
-    public List<HotelBookingResponseDTO> getHotelBooking(@PathVariable Long hotelId){
+    public List<HotelBookingResponseDTO> getIndividualHotelBooking(@PathVariable Long hotelId){
         return bookingService.getHotelBookings(hotelId);
     }
 

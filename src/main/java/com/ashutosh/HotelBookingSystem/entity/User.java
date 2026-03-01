@@ -1,6 +1,7 @@
 package com.ashutosh.HotelBookingSystem.entity;
 
 import com.ashutosh.HotelBookingSystem.Enum.IdType;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
@@ -42,6 +43,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String uniqueIdNumber;
 
+    @JsonFormat(pattern = "MM-dd-yyyy HH:mm:ss")
     private LocalDateTime createdAt;
 
     @PrePersist
