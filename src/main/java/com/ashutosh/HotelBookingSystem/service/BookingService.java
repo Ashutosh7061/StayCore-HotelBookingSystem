@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ashutosh.HotelBookingSystem.Mapper.helperFunctions;
 
 
-import java.awt.print.Book;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -34,7 +33,6 @@ public class BookingService {
     private final RoomRepository roomRepository;
     private final HotelRepository hotelRepository;
     private final UserRepository userRepository;
-    private final CommissionService commissionService;
 
 
     @Transactional
@@ -93,7 +91,6 @@ public class BookingService {
         for(int i = 0 ; i < noOfRooms ; i++){
             Room room = availableRooms.get(i);
             room.setStatus(RoomStatus.BOOKED);
-//            allottedRooms.add(room.getRoomNumber());
         }
 
         Booking booking = new Booking();

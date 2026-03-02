@@ -1,13 +1,13 @@
 package com.ashutosh.HotelBookingSystem.service;
 
-import com.ashutosh.HotelBookingSystem.Enum.IdType;
 import com.ashutosh.HotelBookingSystem.entity.User;
 import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
 import com.ashutosh.HotelBookingSystem.exception.DuplicateDataException;
-import com.ashutosh.HotelBookingSystem.exception.InvalidIdNumberException;
 import com.ashutosh.HotelBookingSystem.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.ashutosh.HotelBookingSystem.Mapper.helperFunctions;
+
 
 import java.util.List;
 
@@ -19,7 +19,8 @@ public class UserService {
 
     public User registerUser(User user){
 
-        validateGovernmentId(user.getUniqueIdType(), user.getUniqueIdNumber());
+        helperFunctions.validateGovernmentId(user.getUniqueIdType(), user.getUniqueIdNumber());
+        helperFunctions.isValidPhoneNumber(user.getPhoneNo());
         boolean exists = userRepository.existsByUniqueIdNumber(user.getUniqueIdNumber());
 
         if(exists){
@@ -51,25 +52,5 @@ public class UserService {
     public List<User> getAllUsers(){
         return userRepository.findAll();
     }
-
-    private void validateGovernmentId(IdType idType, String uniqueIdNumber) {
-
-        if (idType == IdType.AADHAR) {
-            if (!uniqueIdNumber.matches("\\d{12}")) {
-                throw new InvalidIdNumberException(
-                        "Aadhaar must be exactly 12 digits"
-                );
-            }
-        }
-        if (idType == IdType.VOTER_CARD) {
-            if (!uniqueIdNumber.matches("^[A-Z]{3}[0-9]{7}$")) {
-                throw new InvalidIdNumberException(
-                        "Voter ID must be 3 uppercase letters followed by 7 digits"
-                );
-            }
-        }
-    }
-
-
 
 }

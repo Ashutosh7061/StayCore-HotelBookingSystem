@@ -2,6 +2,7 @@ package com.ashutosh.HotelBookingSystem.service;
 
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.Enum.RoomStatus;
+import com.ashutosh.HotelBookingSystem.Mapper.helperFunctions;
 import com.ashutosh.HotelBookingSystem.dto.*;
 import com.ashutosh.HotelBookingSystem.entity.Booking;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
@@ -30,7 +31,13 @@ public class HotelService {
 
     public Hotel registerHotel(Hotel hotel){
 
-        boolean phoneExists = hotelRepository.existsByContact(hotel.getContact());
+        helperFunctions.isValidPhoneNumber(hotel.getPhoneNo());
+
+        if(hotelRepository.existsByGovtRegisteredNo(hotel.getGovtRegisteredNo())){
+            throw new InvalidIdNumberException("Hotel already exists with the same Govt Registered Number");
+        }
+
+        boolean phoneExists = hotelRepository.existsByPhoneNo(hotel.getPhoneNo());
 
         boolean locationExists = hotelRepository.existsByHotelNameAndAddressLineAndCityAndPinCode(
                 hotel.getHotelName(),
@@ -68,7 +75,7 @@ public class HotelService {
                             hotel.getId(),
                             hotel.getHotelName(),
                             addressDTO,
-                            hotel.getContact()
+                            hotel.getPhoneNo()
                     );
                 })
                 .toList();

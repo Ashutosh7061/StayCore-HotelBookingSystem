@@ -86,6 +86,7 @@ public class AdminService {
                 hotel.getId(),
                 hotel.getHotelName(),
                 hotel.getAddressLine(),
+                hotel.getEmail(),
                 addressDTO,
                 totalBooking,
                 completedBookings,
@@ -112,6 +113,7 @@ public class AdminService {
                 registrationCommission + bookingCommission;
 
         return new PlatformDashboardDTO(
+                "WELCOME to ADMIN PANEL",
                 totalCompletedBookings,
                 registrationCommission,
                 bookingCommission,
