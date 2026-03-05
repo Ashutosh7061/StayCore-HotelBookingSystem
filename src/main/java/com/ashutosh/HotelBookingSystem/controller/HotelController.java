@@ -3,11 +3,14 @@ package com.ashutosh.HotelBookingSystem.controller;
 
 import com.ashutosh.HotelBookingSystem.dto.*;
 import com.ashutosh.HotelBookingSystem.entity.Room;
+import com.ashutosh.HotelBookingSystem.security.CustomUserDetails;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
 import com.ashutosh.HotelBookingSystem.service.HotelService;
 import com.ashutosh.HotelBookingSystem.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,29 +25,25 @@ public class HotelController {
     private final RoomService roomService;
 
 
-    @PostMapping("/{hotelId}/addRoom")
-    public Room addRoom(@PathVariable Long hotelId, @RequestBody Room room){
-        return roomService.addRoom(hotelId,room);
+    @PreAuthorize("hasRole('HOTEL')")
+    @PostMapping("/addRoom")
+    public Room addRoom(@RequestBody Room room, @AuthenticationPrincipal CustomUserDetails hotel){
+        return roomService.addRoom( hotel.getReferenceId(),room);
     }
 
-//    @GetMapping
-//    public List<HotelResponseDTO> getAllHotels(){
-//        return hotelService.getAllHotels();
-//    }
-
-    @GetMapping("/{hotelId}/bookings")
-    public List<HotelBookingResponseDTO> getIndividualHotelBooking(@PathVariable Long hotelId){
-        return bookingService.getHotelBookings(hotelId);
+    @PreAuthorize("hasRole('HOTEL')")
+    @GetMapping("/bookings")
+    public ResponseEntity<List<HotelBookingResponseDTO>> getIndividualHotelBooking(){
+        return ResponseEntity.ok(bookingService.getHotelBookings());
     }
 
-    @PutMapping("/bookings/{bookingId}/checkout")
-    public CheckoutResponseDTO checkout(@PathVariable Long bookingId,
-                                        @RequestParam(required = false) String review,
-                                        @RequestParam(required = false) Integer rating,
-                                        @RequestParam(required = false) String roomCondition){
-        return hotelService.checkout(bookingId, review, rating, roomCondition);
+    @PreAuthorize("hasRole('HOTEL')")
+    @PutMapping("checkout")
+    public ResponseEntity<CheckoutResponseDTO> checkout(@RequestBody CheckOutRequestDTO request){
+        return ResponseEntity.ok(hotelService.checkout(request));
     }
 
+    @PreAuthorize("hasRole('HOTEL')")
     @PostMapping("/check-in")
     public ResponseEntity<CheckInResponseDTO> checkIn(@RequestBody CheckInRequestDTO request){
         return ResponseEntity.ok(hotelService.checkIn(request));

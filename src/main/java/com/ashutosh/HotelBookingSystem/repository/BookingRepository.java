@@ -5,14 +5,20 @@ import com.ashutosh.HotelBookingSystem.entity.Booking;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-import java.awt.print.Book;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByUserId(Long userId);
+
+    @Query("""
+       SELECT b
+       FROM Booking b
+       JOIN FETCH b.hotel
+       WHERE b.user.id = :userId
+       """)
+    List<Booking> findBookingsWithHotel(Long userId);
 
     List<Booking> findByHotelId(Long hotelId);
 
@@ -42,7 +48,15 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             """)
     Long getTotalBookingByUserId(Long userId);
 
-    List<Booking> findByUser_IdAndStatus(Long userId, BookingStatus status);
+//    List<Booking> findByUser_IdAndStatus(Long userId, BookingStatus status);
+    @Query("""
+       SELECT b
+       FROM Booking b
+       JOIN FETCH b.hotel
+       WHERE b.user.id = :userId
+       AND b.status = :status
+       """)
+    List<Booking> findBookingsWithHotelAndStatus(Long userId, BookingStatus status);
 
     @Query("""
        SELECT b

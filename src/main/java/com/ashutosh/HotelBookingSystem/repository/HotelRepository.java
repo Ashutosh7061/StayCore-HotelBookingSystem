@@ -10,4 +10,5 @@ public interface HotelRepository extends JpaRepository<Hotel,Long> {
 
     boolean existsByGovtRegisteredNo(String govtRegisteredNo);
 
+    boolean existsByEmail(String email);
 }

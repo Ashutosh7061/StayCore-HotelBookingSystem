@@ -13,12 +13,14 @@ import com.ashutosh.HotelBookingSystem.repository.BookingRepository;
 import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
 import com.ashutosh.HotelBookingSystem.repository.RoomRepository;
 import com.ashutosh.HotelBookingSystem.repository.UserRepository;
+import com.ashutosh.HotelBookingSystem.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ashutosh.HotelBookingSystem.Mapper.helperFunctions;
 
-
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -36,31 +38,38 @@ public class BookingService {
 
 
     @Transactional
-    public BookingResponseDTO bookRoom(
-            Long userId, Long hotelId, String roomType,
-            LocalDate checkInDate, LocalDate checkOutDate, int noOfRooms,
-            Boolean duplicateBooking
-    ){
+    public BookingResponseDTO bookRoom(UserBookingRequestDTO request){
+
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext()
+                        .getAuthentication()
+                        .getPrincipal();
+
+
+        Long userId = loggedUser.getReferenceId();
+
+        LocalDate checkInDate = request.getCheckInDate();
+        LocalDate checkOutDate = request.getCheckOutDate();
 
         // Duplicate booking check
         List<Booking> existingBookings =
                 bookingRepository
                         .findByUser_IdAndHotel_IdAndRoomTypeAndCheckInDateAndCheckOutDateAndStatus(
                                 userId,
-                                hotelId,
-                                roomType,
+                                request.getHotelId(),
+                                request.getRoomType(),
                                 checkInDate,
                                 checkOutDate,
                                 BookingStatus.CONFIRMED
                         );
 
-        if (!existingBookings.isEmpty() && (duplicateBooking == null || !duplicateBooking)) {
+        if (!existingBookings.isEmpty() && (request.getDuplicateBooking() == null || !request.getDuplicateBooking())) {
             throw new DuplicateDataException(
                     "Same booking already exists. If you want to book again, pass duplicateBooking=true."
             );
         }
 
-        if(checkOutDate.isBefore(checkInDate) || checkOutDate.isEqual(checkInDate)){
+        if(checkOutDate.isBefore(checkInDate)
+                || checkOutDate.isEqual(checkInDate)){
             throw new InvalidCheckOutDateException("Invalid check-out date, please provide correct check-out date.");
         }
         if(checkInDate.isBefore(LocalDate.now())){
@@ -71,24 +80,25 @@ public class BookingService {
 
         User user = userRepository.findById(userId)
                         .orElseThrow(()-> new DataNotFoundException("User not found."));
-        Hotel hotel = hotelRepository.findById(hotelId)
+
+        Hotel hotel = hotelRepository.findById(request.getHotelId())
                         .orElseThrow(()-> new DataNotFoundException("Hotel not found"));
 
         List<Room> availableRooms = roomRepository
-                        .findByHotel_IdAndRoomTypeAndStatus(hotelId, roomType, RoomStatus.VACENT);
+                        .findByHotel_IdAndRoomTypeAndStatus(request.getHotelId(), request.getRoomType(), RoomStatus.VACENT);
 
-        if(availableRooms.size() < noOfRooms){
+        if(availableRooms.size() < request.getNoOfRooms()){
             throw new DataNotFoundException("Not enough rooms available, there are only "+ availableRooms.size()+" rooms available");
         }
 
         //Price calculation
         double pricePerRoom = availableRooms.get(0).getPrice();
-        double totalPrice = pricePerRoom * days * noOfRooms;
+        double totalPrice = pricePerRoom * days * request.getNoOfRooms();
 
         //Updating rooms status
         List<String> allottedRooms = new ArrayList<>();
 
-        for(int i = 0 ; i < noOfRooms ; i++){
+        for(int i = 0 ; i < request.getNoOfRooms() ; i++){
             Room room = availableRooms.get(i);
             room.setStatus(RoomStatus.BOOKED);
         }
@@ -97,8 +107,8 @@ public class BookingService {
 
         booking.setUser(user);
         booking.setHotel(hotel);
-        booking.setRoomType(roomType);
-        booking.setNumberOfRooms(noOfRooms);
+        booking.setRoomType(request.getRoomType());
+        booking.setNumberOfRooms(request.getNoOfRooms());
         booking.setCheckInDate(checkInDate);
         booking.setCheckOutDate(checkOutDate);
         booking.setTotalPrice(totalPrice);
@@ -112,9 +122,8 @@ public class BookingService {
                 savedBooking.getId(),
                 hotel.getId(),
                 hotel.getHotelName(),
-//                allottedRooms,
                 (int)days,
-                noOfRooms,
+                request.getNoOfRooms(),
                 savedBooking.getCheckInDate(),
                 savedBooking.getCheckOutDate(),
                 totalPrice,
@@ -124,7 +133,11 @@ public class BookingService {
 
     }
 
-    public List<UserBookingResponseDTO> getUserBookings(Long userId, BookingStatus status){
+    public List<UserBookingResponseDTO> getIndividualUserBookings(BookingStatus status){
+
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Long userId = loggedUser.getReferenceId();
 
         userRepository.findById(userId)
                 .orElseThrow(() ->
@@ -136,16 +149,13 @@ public class BookingService {
         List<Booking> bookings;
 
         if (status == null) {
-            bookings = bookingRepository.findByUserId(userId);
+            bookings = bookingRepository.findBookingsWithHotel(userId);
         } else {
-            bookings = bookingRepository
-                    .findByUser_IdAndStatus(userId, status);
+            bookings = bookingRepository.findBookingsWithHotelAndStatus(userId, status);
         }
 
         if (bookings.isEmpty()) {
-            throw new DataNotFoundException(
-                    "No bookings found for user id: " + userId
-            );
+            throw new DataNotFoundException("No bookings found for user id: " + userId);
         }
         return bookings.stream()
                 .map(booking -> {
@@ -164,11 +174,9 @@ public class BookingService {
                             booking.getId(),
                             booking.getHotel().getHotelName(),
                             addressDTO,
-                            booking.getAllottedRoomNumber(),
                             days,
                             booking.getNumberOfRooms(),
-                            booking.getTotalPrice(),
-                            booking.getStatus().name(),
+                           booking.getStatus().name(),
                             booking.getBookingTime()
                     );
                 })
@@ -176,7 +184,11 @@ public class BookingService {
     }
 
 
-    public List<HotelBookingResponseDTO> getHotelBookings(Long hotelId) {
+    public List<HotelBookingResponseDTO> getHotelBookings() {
+
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Long hotelId = loggedUser.getReferenceId();
 
         Hotel hotel = hotelRepository.findById(hotelId)
                 .orElseThrow(()-> new DataNotFoundException("Hotel not found with id: "+ hotelId));
@@ -212,9 +224,17 @@ public class BookingService {
 
     public BookingSummaryDTO getBookingSummary(Long bookingId){
 
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Long userId = loggedUser.getReferenceId();
+
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(()-> new DataNotFoundException("Booking not found for this bookingId."));
 
+
+        if(!booking.getUser().getId().equals(userId)){
+            throw new UnauthorizedAccessException("You are not allowed to view this bookings.");
+        }
         int days = helperFunctions.calculateDays(booking);
 
         String fullAddress = booking.getHotel().getAddressLine()+ ", "+
@@ -223,9 +243,6 @@ public class BookingService {
 
         return new BookingSummaryDTO(
                 booking.getId(),
-                booking.getUser().getId(),
-                booking.getUser().getName(),
-                booking.getUser().getPhoneNo(),
 
                 booking.getHotel().getId(),
                 booking.getHotel().getHotelName(),
@@ -233,11 +250,8 @@ public class BookingService {
                 booking.getAllottedRoomNumber(),
                 days,
                 booking.getNumberOfRooms(),
-
                 booking.getTotalPrice(),
-
                 booking.getStatus().name(),
-
                 booking.getBookingTime()
         );
     }
@@ -305,9 +319,32 @@ public class BookingService {
     @Transactional
     public CancellationResponseDTO cancelBooking(Long bookingId, CancelledBy cancelledBy, String reason){
 
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+
+        String role = loggedUser.getRole();
+        Long referenceId = loggedUser.getReferenceId();
+
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(()-> new DataNotFoundException("Booking not found for this given id."));
 
+
+        if(role.equals("USER")){
+            if(!booking.getUser().getId().equals(referenceId)){
+                throw new UnauthorizedAccessException("You can cancel yours own bookings.");
+            }
+            if(cancelledBy != CancelledBy.USER){
+                throw new BookingValidationException("Invalid cancellation type for user");
+            }
+        }
+        else if(role.equals("HOTEL")){
+            if(!booking.getHotel().getId().equals(referenceId)){
+                throw new UnauthorizedAccessException("You can cancel only booking of your own hotel");
+            }
+            if(cancelledBy != CancelledBy.HOTEL){
+                throw new BookingValidationException("Invalid cancellation type for hotel");
+            }
+        }
         if(booking.getStatus() == BookingStatus.CANCELLED){
             throw new InvalidBookingStateException("Booking already cancelled");
         }

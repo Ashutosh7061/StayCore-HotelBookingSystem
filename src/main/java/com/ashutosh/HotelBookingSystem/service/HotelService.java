@@ -11,7 +11,9 @@ import com.ashutosh.HotelBookingSystem.exception.*;
 import com.ashutosh.HotelBookingSystem.repository.BookingRepository;
 import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
 import com.ashutosh.HotelBookingSystem.repository.RoomRepository;
+import com.ashutosh.HotelBookingSystem.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,10 +34,6 @@ public class HotelService {
     public Hotel registerHotel(Hotel hotel){
 
         helperFunctions.isValidPhoneNumber(hotel.getPhoneNo());
-
-        if(hotelRepository.existsByGovtRegisteredNo(hotel.getGovtRegisteredNo())){
-            throw new InvalidIdNumberException("Hotel already exists with the same Govt Registered Number");
-        }
 
         boolean phoneExists = hotelRepository.existsByPhoneNo(hotel.getPhoneNo());
 
@@ -92,11 +90,29 @@ public class HotelService {
 
     @Transactional
     public CheckInResponseDTO checkIn(CheckInRequestDTO request){
+
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+
+        String role = loggedUser.getRole();
+        Long hotelId = loggedUser.getReferenceId();
+
+        if(!loggedUser.getRole().equals("HOTEL")){
+            throw new UnauthorizedAccessException("Only hotel can perform check-in");
+        }
+
         Booking booking = bookingRepository.findById(request.getBookingId())
                 .orElseThrow(()-> new DataNotFoundException("Booking not found."));
 
+        if(!booking.getHotel().getId().equals(hotelId)){
+            throw new UnauthorizedAccessException("You cannot check-in bookings of another hotel");
+        }
+
         LocalDate today = LocalDate.now();
         LocalDate checkInDate = booking.getCheckInDate();
+
         if(today.isBefore(checkInDate)|| today.isAfter(checkInDate) ){
             throw new BookingCheckInException("Check-in is allowed only on check-in date or between booking dates.");
         }
@@ -143,10 +159,25 @@ public class HotelService {
     }
 
     @Transactional
-    public CheckoutResponseDTO checkout(Long bookingId, String review, Integer rating, String roomCondition){
+    public CheckoutResponseDTO checkout(CheckOutRequestDTO request){
 
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(()-> new DataNotFoundException("Booking not found with this bookingId: "+bookingId));
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+
+        Long hotelId = loggedUser.getReferenceId();
+
+        if(!loggedUser.getRole().equals("HOTEL")){
+            throw new UnauthorizedAccessException("Only hotel can perform checkout");
+        }
+
+        Booking booking = bookingRepository.findById(request.getBookingId())
+                .orElseThrow(()-> new DataNotFoundException("Booking not found with this bookingId: "+ request.getBookingId()));
+
+        if(!booking.getHotel().getId().equals(hotelId)){
+            throw new UnauthorizedAccessException("You cannot checkout bookings of another hotel");
+        }
 
         if(booking.getStatus() == BookingStatus.CANCELLED){
             throw new BookingCheckoutException("Cancelled booking cannot be checked out.");
@@ -157,16 +188,16 @@ public class HotelService {
         if(booking.getStatus() != BookingStatus.CONFIRMED){
             throw new BookingCheckoutException("Only confirmed booking can be checked out");
         }
-        if(rating != null){
-            if(rating < 1 || rating > 5){
+        if(request.getRating() != null){
+            if(request.getRating() < 1 || request.getRating() > 5){
                 throw new InvalidRatingException("Rating must be between 1 and 5.");
             }
         }
 
         booking.setStatus(BookingStatus.COMPLETED);
-        booking.setReview(review);
-        booking.setRating(rating);
-        booking.setRoomCondition(roomCondition.toUpperCase());
+        booking.setReview(request.getReview());
+        booking.setRating(request.getRating());
+        booking.setRoomCondition(request.getRoomCondition().toUpperCase());
         booking.setCheckoutTime(LocalDateTime.now());
 
         List<String> roomNumber = booking.getAllottedRoomNumber();

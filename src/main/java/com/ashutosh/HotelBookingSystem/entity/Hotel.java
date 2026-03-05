@@ -50,7 +50,7 @@ public class Hotel {
     @Column(length = 12, name = "phoneNo")
     private String phoneNo;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
@@ -59,6 +59,8 @@ public class Hotel {
     @Column(nullable = false,unique = true)
     private String govtRegisteredNo;
 
+    @Column(nullable = false,unique = true)
+    private String gstNo;
 
     @OneToMany(mappedBy = "hotel")
     private List<Room> rooms;

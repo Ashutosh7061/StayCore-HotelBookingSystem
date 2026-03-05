@@ -1,6 +1,7 @@
 package com.ashutosh.HotelBookingSystem.entity;
 
 import com.ashutosh.HotelBookingSystem.Enum.IdType;
+import com.ashutosh.HotelBookingSystem.Enum.Role;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -34,6 +35,7 @@ public class User {
 
     @Column(nullable = false, unique = true)
     private String phoneNo;
+
     private String address;
 
     @Enumerated(EnumType.STRING)

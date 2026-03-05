@@ -1,8 +1,9 @@
 package com.ashutosh.HotelBookingSystem.controller;
 
-import com.ashutosh.HotelBookingSystem.dto.AdminRoomDTO;
+import com.ashutosh.HotelBookingSystem.dto.*;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.entity.User;
+import com.ashutosh.HotelBookingSystem.service.AuthService;
 import com.ashutosh.HotelBookingSystem.service.HotelService;
 import com.ashutosh.HotelBookingSystem.service.RoomService;
 import com.ashutosh.HotelBookingSystem.service.UserService;
@@ -19,17 +20,26 @@ public class PublicController {
     private final UserService userService;
     private final HotelService hotelService;
     private final RoomService roomService;
+    private final AuthService authService;
 
-    @PostMapping("/registerUser")
-    public User registerUser(@RequestBody User user){
-        return userService.registerUser(user);
-    }
+//    @PostMapping("/registerUser")
+//    public User registerUser(@RequestBody User user){
+//        return userService.registerUser(user);
+//    }
+     @PostMapping("/registerUser")
+     public String registerUser(@RequestBody UserSignupRequestDTO request){
+        return authService.registerUser(request);
+     }
 
     @PostMapping("/registerHotel")
-    public Hotel registerHotel(@RequestBody Hotel hotel){
-        return hotelService.registerHotel(hotel);
+    public String registerHotel(@RequestBody HotelSignupRequestDTO hotel){
+        return authService.registerHotel(hotel);
     }
 
+    @PostMapping("/login")
+    public LoginResponseDTO loginUser(@RequestBody LoginRequestDTO request){
+        return authService.login(request);
+    }
 
     @GetMapping("/hotel/{hotelId}/allRooms")
     public List<AdminRoomDTO> getRooms(@PathVariable Long hotelId){
