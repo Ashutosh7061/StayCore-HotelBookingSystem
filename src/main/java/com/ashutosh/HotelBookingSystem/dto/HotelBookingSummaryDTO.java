@@ -5,24 +5,25 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class HotelBookingResponseDTO {
+public class HotelBookingSummaryDTO {
 
     private Long bookingId;
 
     private String userName;
-    private List<String> allottedRoomNumbers;
+    private String userPhoneNO;
 
+    LocalDate checkInDate;
+    LocalDate checkOutDate;
+
+    private String roomType;
     private int numberOfRooms;
-    private int numberOfDays;
-
-    private double totalPrice;
 
     private String status;
 

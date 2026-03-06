@@ -33,12 +33,18 @@ public class HotelController {
 
     @PreAuthorize("hasRole('HOTEL')")
     @GetMapping("/bookings")
-    public ResponseEntity<List<HotelBookingResponseDTO>> getIndividualHotelBooking(){
+    public ResponseEntity<List<HotelBookingSummaryDTO>> getIndividualHotelBooking(){
         return ResponseEntity.ok(bookingService.getHotelBookings());
     }
 
     @PreAuthorize("hasRole('HOTEL')")
-    @PutMapping("checkout")
+    @GetMapping("/{bookingId}/specific-booking")
+    public ResponseEntity<HotelSpecificBookingDetailsDTO> getSpecificBookingDetails(@PathVariable Long bookingId){
+        return ResponseEntity.ok(bookingService.getIndividualBookingDetails(bookingId));
+    }
+
+    @PreAuthorize("hasRole('HOTEL')")
+    @PutMapping("/checkout")
     public ResponseEntity<CheckoutResponseDTO> checkout(@RequestBody CheckOutRequestDTO request){
         return ResponseEntity.ok(hotelService.checkout(request));
     }

@@ -184,14 +184,11 @@ public class BookingService {
     }
 
 
-    public List<HotelBookingResponseDTO> getHotelBookings() {
+    public List<HotelBookingSummaryDTO> getHotelBookings() {
 
         CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         Long hotelId = loggedUser.getReferenceId();
-
-        Hotel hotel = hotelRepository.findById(hotelId)
-                .orElseThrow(()-> new DataNotFoundException("Hotel not found with id: "+ hotelId));
 
         List<Booking> bookings = bookingRepository.findByHotelId(hotelId);
 
@@ -207,19 +204,56 @@ public class BookingService {
                             booking.getCheckOutDate()
                     );
 
-                    return new HotelBookingResponseDTO(
+                    return new HotelBookingSummaryDTO(
                             booking.getId(),
                             booking.getUser().getName(),
-                            booking.getAllottedRoomNumber(),
-                            days,
+                            booking.getUser().getPhoneNo(),
+                            booking.getCheckInDate(),
+                            booking.getCheckOutDate(),
+                            booking.getRoomType(),
                             booking.getNumberOfRooms(),
-                            booking.getTotalPrice(),
                             booking.getStatus().name(),
                             booking.getBookingTime()
                     );
                 })
                 .toList();
     }
+
+    public HotelSpecificBookingDetailsDTO getIndividualBookingDetails(Long bookingId){
+
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Long hotelId = loggedUser.getReferenceId();
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(()-> new DataNotFoundException("Booking not found with given id"));
+
+        if(!booking.getHotel().getId().equals(hotelId)){
+            throw new UnauthorizedAccessException("You are not allowed to access this booking");
+        }
+
+        HotelSpecificBookingDetailsDTO response = new HotelSpecificBookingDetailsDTO();
+
+        response.setBookingId(booking.getId());
+        response.setUserName(booking.getUser().getName());
+        response.setUserPhoneNo(booking.getUser().getPhoneNo());
+        response.setUserEmail(booking.getUser().getEmail());
+
+        response.setCheckInDate(booking.getCheckInDate());
+        response.setCheckOutDate(booking.getCheckOutDate());
+
+        response.setRoomType(booking.getRoomType());
+        response.setNoOfRooms(booking.getNumberOfRooms());
+        response.setNoOfDays(booking.getNumberOfRooms());
+        response.setAllottedRoomNumber(booking.getAllottedRoomNumber());
+        response.setTotalPrice(booking.getTotalPrice());
+        response.setStatus(booking.getStatus());
+        response.setBookingTime(booking.getBookingTime());
+
+        return response;
+    }
+
+
 
 
     public BookingSummaryDTO getBookingSummary(Long bookingId){
@@ -264,53 +298,79 @@ public class BookingService {
                         new DataNotFoundException("Hotel not found with id: " + hotelId)
                 );
 
-        List<Booking> bookings = bookingRepository.findBookingsByHotelAndStatus(hotelId, status);
+        List<Booking> bookings;
+
+        if(status == null){
+            bookings = bookingRepository.findByHotel_Id(hotelId);
+        }
+        else{
+            bookings = bookingRepository.findBookingsByHotelAndStatus(hotelId,status);
+        }
 
         if (bookings.isEmpty()) {
-            throw new DataNotFoundException(
-                    "No booking found for status " + status
-            );
+            throw new DataNotFoundException("No booking found for status " + status);
         }
         return bookings.stream()
                 .map(booking -> {
 
                     User user = booking.getUser();
 
-                    if (status == BookingStatus.CANCELLED) {
-
-                        return new CancelledUserPerHotelResponseDTO(
-                                user.getId(),
-                                user.getName(),
-                                user.getEmail(),
-                                user.getPhoneNo(),
-                                user.getCreatedAt(),
-                                booking.getCancelledBy(),
-                                booking.getCancellationReason()
+                    if(status == null){
+                        return new ConfirmedUserPerHotelResponseDTO(
+                          user.getId(),
+                          user.getName(),
+                          user.getEmail(),
+                          user.getPhoneNo(),
+                          user.getCreatedAt(),
+                          booking.getCheckInDate(),
+                          booking.getCheckOutDate(),
+                          booking.getNumberOfRooms()
                         );
                     }
 
-                    if (status == BookingStatus.COMPLETED) {
+                    switch (booking.getStatus()){
 
-                        return new CompletedUserPerHotelResponseDTO(
-                                user.getId(),
-                                user.getName(),
-                                user.getEmail(),
-                                user.getPhoneNo(),
-                                user.getCreatedAt(),
-                                booking.getReview(),
-                                booking.getRating()
-                        );
+                        case CANCELLED:
+                            return new CancelledUserPerHotelResponseDTO(
+                                    user.getId(),
+                                    user.getName(),
+                                    user.getEmail(),
+                                    user.getPhoneNo(),
+                                    user.getCreatedAt(),
+                                    booking.getCancelledBy(),
+                                    booking.getCancellationReason()
+                            );
+                        case COMPLETED:
+                            return new CompletedUserPerHotelResponseDTO(
+                                    user.getId(),
+                                    user.getName(),
+                                    user.getEmail(),
+                                    user.getPhoneNo(),
+                                    user.getCreatedAt(),
+                                    booking.getReview(),
+                                    booking.getRating()
+                            );
+                        case CONFIRMED:
+                            return new ConfirmedUserPerHotelResponseDTO(
+                                    user.getId(),
+                                    user.getName(),
+                                    user.getEmail(),
+                                    user.getPhoneNo(),
+                                    user.getCreatedAt(),
+                                    booking.getCheckInDate(),
+                                    booking.getCheckOutDate(),
+                                    booking.getNumberOfRooms()
+                            );
+
+                        default:
+                            return new BaseUserPerHotelResponseDTO(
+                                    user.getId(),
+                                    user.getName(),
+                                    user.getEmail(),
+                                    user.getPhoneNo(),
+                                    user.getCreatedAt()
+                            );
                     }
-
-                    // CONFIRMED or others
-                    return new BaseUserPerHotelResponseDTO(
-                            user.getId(),
-                            user.getName(),
-                            user.getEmail(),
-                            user.getPhoneNo(),
-                            user.getCreatedAt()
-                    );
-
                 })
                 .toList();
     }

@@ -24,6 +24,7 @@ public class UserController {
     private final BookingService bookingService;
 
 
+    @PreAuthorize("hasRole('USER')")
     @PostMapping
     public BookingResponseDTO bookRoom(@RequestBody UserBookingRequestDTO request){
         return bookingService.bookRoom(request);
@@ -38,6 +39,7 @@ public class UserController {
         );
     }
 
+    @PreAuthorize("hasRole('USER')")
     @PutMapping("/bookings/{bookingId}/cancelBooking")
     public CancellationResponseDTO cancelBooking(
             @PathVariable Long bookingId,

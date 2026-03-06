@@ -31,32 +31,6 @@ public class HotelService {
     private final RoomRepository roomRepository;
     private final CommissionService commissionService;
 
-    public Hotel registerHotel(Hotel hotel){
-
-        helperFunctions.isValidPhoneNumber(hotel.getPhoneNo());
-
-        boolean phoneExists = hotelRepository.existsByPhoneNo(hotel.getPhoneNo());
-
-        boolean locationExists = hotelRepository.existsByHotelNameAndAddressLineAndCityAndPinCode(
-                hotel.getHotelName(),
-                hotel.getAddressLine(),
-                hotel.getCity(),
-                hotel.getPinCode());
-
-        if(phoneExists && locationExists){
-            throw new DuplicateDataException("Phone number and hotel location both already exist");
-        }
-        if (phoneExists) {
-            throw new DuplicateDataException("Phone number already exists");
-        }
-        if (locationExists) {
-            throw new DuplicateDataException("This hotel already exists at this location");
-        }
-
-        return hotelRepository.save(hotel);
-    }
-
-
     public List<HotelResponseDTO> getAllHotels() {
         List<Hotel> hotels = hotelRepository.findAll();
 

@@ -48,7 +48,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             """)
     Long getTotalBookingByUserId(Long userId);
 
-//    List<Booking> findByUser_IdAndStatus(Long userId, BookingStatus status);
     @Query("""
        SELECT b
        FROM Booking b
@@ -84,4 +83,5 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     long countByHotelIdAndStatus(Long hotelId, BookingStatus status);
 
+    List<Booking> findByHotel_Id(Long hotelId);
 }
