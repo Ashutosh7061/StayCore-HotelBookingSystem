@@ -75,5 +75,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleEarlierCheckInDate(BookingCheckInException ex){
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.CONFLICT);
     }
+    @ExceptionHandler(InvalidPhoneNumberException.class)
+    public ResponseEntity<String> handleInvalidPhoneNumber(InvalidPhoneNumberException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UnauthorizedAccessException.class)
+    public ResponseEntity<String> handleUnauthorizedAccess(UnauthorizedAccessException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
 
 }

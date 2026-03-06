@@ -2,6 +2,7 @@ package com.ashutosh.HotelBookingSystem.entity;
 
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.Enum.CancelledBy;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -28,9 +29,12 @@ public class Booking {
     @Column(length = 20)
     private BookingStatus status;
 
+    @JsonFormat(pattern = "MM-dd-yyyy HH:mm:ss")
     private LocalDateTime bookingTime;
 
+    @JsonFormat(pattern = "MM-dd-yyyy")
     private LocalDate checkInDate;
+    @JsonFormat(pattern = "MM-dd-yyyy")
     private LocalDate checkOutDate;
 
     // RelationShip Creation
@@ -56,7 +60,10 @@ public class Booking {
     // for check-out
     private Integer rating;
     private String review;
+
+    @JsonFormat(pattern = "MM-dd-yyyy HH:mm:ss")
     private LocalDateTime checkoutTime;
+
     private String roomCondition;
 
 }

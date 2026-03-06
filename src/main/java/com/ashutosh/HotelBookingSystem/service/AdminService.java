@@ -15,6 +15,7 @@ import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
 import com.ashutosh.HotelBookingSystem.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -86,6 +87,7 @@ public class AdminService {
                 hotel.getId(),
                 hotel.getHotelName(),
                 hotel.getAddressLine(),
+                hotel.getEmail(),
                 addressDTO,
                 totalBooking,
                 completedBookings,
@@ -112,6 +114,7 @@ public class AdminService {
                 registrationCommission + bookingCommission;
 
         return new PlatformDashboardDTO(
+                "WELCOME to ADMIN PANEL",
                 totalCompletedBookings,
                 registrationCommission,
                 bookingCommission,

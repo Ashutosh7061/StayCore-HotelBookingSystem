@@ -15,7 +15,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @JsonPropertyOrder(
-        {"id","hotelName","addressLine","city","state","pinCode","contact","rooms"}
+        {"id","hotelName","addressLine","city","state","pinCode","phoneNo","rooms"}
 )
 @Table(
         uniqueConstraints = {
@@ -47,8 +47,20 @@ public class Hotel {
     @Column(length = 10)
     private String pinCode;
 
-    @Column(length = 12, name = "contact")
-    private String contact;
+    @Column(length = 12, name = "phoneNo")
+    private String phoneNo;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String registeredOwnerName;
+
+    @Column(nullable = false,unique = true)
+    private String govtRegisteredNo;
+
+    @Column(nullable = false,unique = true)
+    private String gstNo;
 
     @OneToMany(mappedBy = "hotel")
     private List<Room> rooms;

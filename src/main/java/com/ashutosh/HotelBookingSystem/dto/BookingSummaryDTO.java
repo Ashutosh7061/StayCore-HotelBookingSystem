@@ -16,10 +16,6 @@ public class BookingSummaryDTO {
 
     private Long bookingId;
 
-    private Long userId;
-    private String userName;
-    private String userPhone;
-
     private Long hotelId;
     private String hotelName;
     private String hotelAddress;

@@ -11,7 +11,8 @@ public class AdminHotelDetailsDTO {
 
     private Long hotelId;
     private String hotelName;
-    private String contact;
+    private String phoneNo;
+    private String email;
     private AddressDTO address;
 
     private Long totalBooking;

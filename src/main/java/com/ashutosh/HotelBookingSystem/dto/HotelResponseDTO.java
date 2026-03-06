@@ -10,6 +10,6 @@ public class HotelResponseDTO {
     private Long hotelId;
     private String hotelName;
     private AddressDTO address;
-    private String contact;
+    private String phoneNo;
 
 }
