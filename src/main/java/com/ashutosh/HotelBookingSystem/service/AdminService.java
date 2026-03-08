@@ -2,6 +2,7 @@ package com.ashutosh.HotelBookingSystem.service;
 
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.Enum.CommissionType;
+import com.ashutosh.HotelBookingSystem.Enum.HotelStatus;
 import com.ashutosh.HotelBookingSystem.dto.AddressDTO;
 import com.ashutosh.HotelBookingSystem.dto.AdminHotelDetailsDTO;
 import com.ashutosh.HotelBookingSystem.dto.AdminUserDetailsDTO;
@@ -9,14 +10,16 @@ import com.ashutosh.HotelBookingSystem.dto.PlatformDashboardDTO;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.entity.User;
 import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
+import com.ashutosh.HotelBookingSystem.exception.InvalidBookingStateException;
+import com.ashutosh.HotelBookingSystem.exception.MissingValueException;
 import com.ashutosh.HotelBookingSystem.repository.BookingRepository;
 import com.ashutosh.HotelBookingSystem.repository.CommissionRepository;
 import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
 import com.ashutosh.HotelBookingSystem.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -29,7 +32,6 @@ public class AdminService {
     private final UserRepository userRepository;
     private final CommissionRepository commissionRepository;
     private final HotelRepository hotelRepository;
-
 
     public List<AdminUserDetailsDTO> getAllUsersForAdmin(){
 
@@ -120,6 +122,57 @@ public class AdminService {
                 bookingCommission,
                 totalPlatformEarnings
         );
+    }
+
+
+    public List<Hotel> getPendingHotels(){
+        List<Hotel> hotels = hotelRepository.findByStatus(HotelStatus.PENDING);
+
+        if(hotels.isEmpty()){
+            throw new DataNotFoundException("No pending hotels found");
+        }
+        return hotels;
+    }
+
+    @Transactional
+    public String approveHotel(Long hotelId){
+
+        Hotel hotel = hotelRepository.findById(hotelId)
+                .orElseThrow(()-> new DataNotFoundException("Hotel not found with id: "+hotelId));
+
+        if(hotel.getState().equals(HotelStatus.APPROVED)){
+            throw new InvalidBookingStateException("Hotel already approved");
+        }
+
+        hotel.setStatus(HotelStatus.APPROVED);
+        hotel.setRejectionReason(null);
+
+        return "Hotel approved successfully";
+    }
+
+
+    @Transactional
+    public String rejectHotel(Long hotelId, String reason){
+        Hotel hotel = hotelRepository.findById(hotelId)
+                .orElseThrow(() -> new DataNotFoundException("Hotel not found with id: " + hotelId));
+
+        if(reason == null || reason.isBlank()){
+            throw new MissingValueException("Rejection reason required");
+        }
+
+        hotel.setStatus(HotelStatus.REJECTED);
+        hotel.setRejectionReason(reason);
+
+        return "Hotel rejected successfully";
+    }
+
+    @Transactional
+    public String blockHotel(Long hotelId){
+        Hotel hotel = hotelRepository.findById(hotelId).orElseThrow(()-> new DataNotFoundException("Hotel not found with id: "+ hotelId));
+
+        hotel.setStatus(HotelStatus.BLOCKED);
+
+        return "Hotel blocked Successfully";
     }
 
 }

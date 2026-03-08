@@ -2,6 +2,7 @@ package com.ashutosh.HotelBookingSystem.service;
 
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.Enum.CancelledBy;
+import com.ashutosh.HotelBookingSystem.Enum.HotelStatus;
 import com.ashutosh.HotelBookingSystem.Enum.RoomStatus;
 import com.ashutosh.HotelBookingSystem.dto.*;
 import com.ashutosh.HotelBookingSystem.entity.Booking;
@@ -35,6 +36,7 @@ public class BookingService {
     private final RoomRepository roomRepository;
     private final HotelRepository hotelRepository;
     private final UserRepository userRepository;
+    private final HotelService hotelService;
 
 
     @Transactional
@@ -83,6 +85,11 @@ public class BookingService {
 
         Hotel hotel = hotelRepository.findById(request.getHotelId())
                         .orElseThrow(()-> new DataNotFoundException("Hotel not found"));
+
+        //check hotel status
+        if(hotel.getStatus() != HotelStatus.APPROVED){
+            throw new UnauthorizedAccessException("Hotel temporarily unavailable for new bookings");
+        }
 
         List<Room> availableRooms = roomRepository
                         .findByHotel_IdAndRoomTypeAndStatus(request.getHotelId(), request.getRoomType(), RoomStatus.VACENT);
@@ -446,6 +453,9 @@ public class BookingService {
         }
 
         if(cancelledBy == CancelledBy.HOTEL){
+
+            hotelService.validateHotelOperation(booking.getHotel());
+
             if(reason == null || reason.isBlank()){
                 throw new BookingValidationException("Cancellation reason requires when hotel cancels booking");
             }

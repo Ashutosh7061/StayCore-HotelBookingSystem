@@ -2,12 +2,14 @@ package com.ashutosh.HotelBookingSystem.controller;
 
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.dto.*;
+import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.service.AdminService;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
 import com.ashutosh.HotelBookingSystem.service.HotelService;
 import com.ashutosh.HotelBookingSystem.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -56,5 +58,30 @@ public class AdminController {
     @GetMapping("/hotel/{hotelId}/allRooms")
     public List<AdminRoomDTO> getRooms(@PathVariable Long hotelId){
         return roomService.getRoomsByHotel(hotelId);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/hotels/pending")
+    public List<Hotel> getPendingHotels(){
+        return adminService.getPendingHotels();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/hotel/{hotelId}/approve")
+    public String approveHotel(@PathVariable Long hotelId){
+        return adminService.approveHotel(hotelId);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/hotel/{hotelId}/reject")
+    public String rejectHotel(@PathVariable Long hotelId, @RequestParam String reason){
+        return adminService.rejectHotel(hotelId,reason);
+    }
+
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/hotel/{hotelId}/block")
+    public String blockHotel(@PathVariable Long hotelId){
+        return adminService.blockHotel(hotelId);
     }
 }

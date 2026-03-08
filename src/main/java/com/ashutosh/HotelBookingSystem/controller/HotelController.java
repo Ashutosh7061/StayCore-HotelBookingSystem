@@ -27,8 +27,8 @@ public class HotelController {
 
     @PreAuthorize("hasRole('HOTEL')")
     @PostMapping("/addRoom")
-    public Room addRoom(@RequestBody Room room, @AuthenticationPrincipal CustomUserDetails hotel){
-        return roomService.addRoom( hotel.getReferenceId(),room);
+    public Room addRoom(@RequestBody Room room){
+        return roomService.addRoom( room);
     }
 
     @PreAuthorize("hasRole('HOTEL')")
@@ -53,5 +53,11 @@ public class HotelController {
     @PostMapping("/check-in")
     public ResponseEntity<CheckInResponseDTO> checkIn(@RequestBody CheckInRequestDTO request){
         return ResponseEntity.ok(hotelService.checkIn(request));
+    }
+
+    @PreAuthorize("hasRole('HOTEL')")
+    @PutMapping("/reapply")
+    public String reapplyHotel(){
+        return hotelService.reapplyHotel();
     }
 }

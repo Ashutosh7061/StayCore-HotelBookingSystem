@@ -1,6 +1,7 @@
 package com.ashutosh.HotelBookingSystem.service;
 
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
+import com.ashutosh.HotelBookingSystem.Enum.HotelStatus;
 import com.ashutosh.HotelBookingSystem.Enum.RoomStatus;
 import com.ashutosh.HotelBookingSystem.Mapper.helperFunctions;
 import com.ashutosh.HotelBookingSystem.dto.*;
@@ -80,6 +81,9 @@ public class HotelService {
         Booking booking = bookingRepository.findById(request.getBookingId())
                 .orElseThrow(()-> new DataNotFoundException("Booking not found."));
 
+
+        validateHotelOperation(booking.getHotel());
+
         if(!booking.getHotel().getId().equals(hotelId)){
             throw new UnauthorizedAccessException("You cannot check-in bookings of another hotel");
         }
@@ -149,6 +153,8 @@ public class HotelService {
         Booking booking = bookingRepository.findById(request.getBookingId())
                 .orElseThrow(()-> new DataNotFoundException("Booking not found with this bookingId: "+ request.getBookingId()));
 
+        validateHotelOperation(booking.getHotel());
+
         if(!booking.getHotel().getId().equals(hotelId)){
             throw new UnauthorizedAccessException("You cannot checkout bookings of another hotel");
         }
@@ -196,4 +202,39 @@ public class HotelService {
         );
     }
 
+    public void validateHotelOperation(Hotel hotel){
+        if(hotel.getStatus() == HotelStatus.PENDING){
+            throw new UnauthorizedAccessException("Hotel account is pending spproval by admin");
+        }
+
+        if(hotel.getStatus() == HotelStatus.REJECTED){
+            throw new UnauthorizedAccessException("Hotel application was rejected. Please reapply");
+        }
+
+        if(hotel.getStatus() == HotelStatus.BLOCKED){
+            throw new UnauthorizedAccessException("Hotel account has been blocked by platform");
+        }
+    }
+
+    public List<Hotel> getAllAvailableHotels() {
+        return hotelRepository.findByStatus(HotelStatus.APPROVED);
+    }
+
+    @Transactional
+    public String reapplyHotel(){
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Long hotelId = loggedUser.getReferenceId();
+
+        Hotel hotel = hotelRepository.findById(hotelId).orElseThrow(()-> new DataNotFoundException("Hotel not found"));
+
+        if(hotel.getStatus() != HotelStatus.REJECTED){
+            throw new HotelRegisterException("Only rejected hotels can reapply");
+        }
+
+        hotel.setStatus(HotelStatus.PENDING);
+        hotel.setRejectionReason(null);
+
+        return "Hotel reapplied successfully. Waiting for admin approval";
+    }
 }

@@ -3,8 +3,10 @@ package com.ashutosh.HotelBookingSystem.controller;
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.Enum.CancelledBy;
 import com.ashutosh.HotelBookingSystem.dto.*;
+import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.entity.User;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
+import com.ashutosh.HotelBookingSystem.service.HotelService;
 import com.ashutosh.HotelBookingSystem.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -22,7 +24,13 @@ public class UserController {
 
     private final UserService userService;
     private final BookingService bookingService;
+    private final HotelService hotelService;
 
+
+    @GetMapping("/allAvailableHotels")
+    public List<Hotel> getAllAvailableHotels(){
+        return hotelService.getAllAvailableHotels();
+    }
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping

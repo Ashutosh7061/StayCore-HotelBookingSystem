@@ -1,6 +1,7 @@
 package com.ashutosh.HotelBookingSystem.entity;
 
 
+import com.ashutosh.HotelBookingSystem.Enum.HotelStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
@@ -64,5 +65,11 @@ public class Hotel {
 
     @OneToMany(mappedBy = "hotel")
     private List<Room> rooms;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private HotelStatus status;
+
+    private String rejectionReason;
 
 }

@@ -7,7 +7,9 @@ import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
 import com.ashutosh.HotelBookingSystem.exception.DuplicateDataException;
 import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
 import com.ashutosh.HotelBookingSystem.repository.RoomRepository;
+import com.ashutosh.HotelBookingSystem.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,12 +21,18 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final HotelRepository hotelRepository;
     private final CommissionService commissionService;
+    private final HotelService hotelService;
 
-    public Room addRoom(Long hotelId,Room room){
+    public Room addRoom(Room room){
 
-       Hotel hotel = hotelRepository.findById(hotelId)
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long hotelId = loggedUser.getReferenceId();
+
+        Hotel hotel = hotelRepository.findById(hotelId)
                .orElseThrow(()-> new DataNotFoundException("Hotel not found"));
 
+
+        hotelService.validateHotelOperation(hotel);
 
         if(roomRepository.findByHotel_IdAndRoomNumber(hotelId,room.getRoomNumber()).isPresent()){
             throw new DuplicateDataException("Room number already exists in this hotel");

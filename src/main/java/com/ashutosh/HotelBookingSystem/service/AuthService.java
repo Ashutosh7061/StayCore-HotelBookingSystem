@@ -1,5 +1,6 @@
 package com.ashutosh.HotelBookingSystem.service;
 
+import com.ashutosh.HotelBookingSystem.Enum.HotelStatus;
 import com.ashutosh.HotelBookingSystem.Enum.Role;
 import com.ashutosh.HotelBookingSystem.Mapper.helperFunctions;
 import com.ashutosh.HotelBookingSystem.dto.HotelSignupRequestDTO;
@@ -84,6 +85,7 @@ public class AuthService {
         return " Welcome😊 " + request.getName()+ " \n You have successfully registered.";
     }
 
+
     public String registerHotel(HotelSignupRequestDTO request) {
 
         if (authUserRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -132,6 +134,8 @@ public class AuthService {
         hotel.setRegisteredOwnerName(request.getRegisteredOwnerName());
         hotel.setGovtRegisteredNo(request.getGovtRegisteredNo());
 
+        hotel.setStatus(HotelStatus.PENDING);
+
         Hotel savedHotel = hotelRepository.save(hotel);
 
         AuthUser authUser = new AuthUser();
@@ -142,7 +146,7 @@ public class AuthService {
 
         authUserRepository.save(authUser);
 
-        return "Welcome😊 " + request.getRegisteredOwnerName() + "\n Your hotel "+request.getHotelName()+ " is successfully registered. \n We are always open for you.";
+        return "Welcome😊 " + request.getRegisteredOwnerName() + "\n Your hotel \""+request.getHotelName()+ "\" is successfully registered. \n We are always open for you.";
     }
 
     public LoginResponseDTO login(LoginRequestDTO request) {

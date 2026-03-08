@@ -85,4 +85,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(MissingValueException.class)
+    public ResponseEntity<String > handleMissingValueException(MissingValueException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(HotelRegisterException.class)
+    public ResponseEntity<String> handleHotelRegisterIssue(HotelRegisterException ex){
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
 }
