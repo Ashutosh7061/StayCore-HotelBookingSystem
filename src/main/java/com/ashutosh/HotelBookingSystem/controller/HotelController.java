@@ -7,6 +7,7 @@ import com.ashutosh.HotelBookingSystem.security.CustomUserDetails;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
 import com.ashutosh.HotelBookingSystem.service.HotelService;
 import com.ashutosh.HotelBookingSystem.service.RoomService;
+import com.ashutosh.HotelBookingSystem.service.SupportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +24,7 @@ public class HotelController {
     private final HotelService hotelService;
     private final BookingService bookingService;
     private final RoomService roomService;
+    private final SupportService supportService;
 
 
     @PreAuthorize("hasRole('HOTEL')")
@@ -60,4 +62,6 @@ public class HotelController {
     public String reapplyHotel(){
         return hotelService.reapplyHotel();
     }
+
+
 }

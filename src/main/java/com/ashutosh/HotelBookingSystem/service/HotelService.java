@@ -48,7 +48,8 @@ public class HotelService {
                             hotel.getId(),
                             hotel.getHotelName(),
                             addressDTO,
-                            hotel.getPhoneNo()
+                            hotel.getPhoneNo(),
+                            hotel.getStatus()
                     );
                 })
                 .toList();

@@ -1,5 +1,6 @@
 package com.ashutosh.HotelBookingSystem.dto;
 
+import com.ashutosh.HotelBookingSystem.Enum.HotelStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,6 +15,8 @@ public class AdminHotelDetailsDTO {
     private String phoneNo;
     private String email;
     private AddressDTO address;
+
+    private HotelStatus status;
 
     private Long totalBooking;
     private Long completedBooking;

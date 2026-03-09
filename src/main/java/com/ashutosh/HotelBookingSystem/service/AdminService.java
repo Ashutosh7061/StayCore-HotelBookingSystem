@@ -3,19 +3,19 @@ package com.ashutosh.HotelBookingSystem.service;
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.Enum.CommissionType;
 import com.ashutosh.HotelBookingSystem.Enum.HotelStatus;
+import com.ashutosh.HotelBookingSystem.Enum.SupportStatus;
 import com.ashutosh.HotelBookingSystem.dto.AddressDTO;
 import com.ashutosh.HotelBookingSystem.dto.AdminHotelDetailsDTO;
 import com.ashutosh.HotelBookingSystem.dto.AdminUserDetailsDTO;
 import com.ashutosh.HotelBookingSystem.dto.PlatformDashboardDTO;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
+import com.ashutosh.HotelBookingSystem.entity.SupportRequest;
 import com.ashutosh.HotelBookingSystem.entity.User;
 import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
+import com.ashutosh.HotelBookingSystem.exception.HotelRegisterException;
 import com.ashutosh.HotelBookingSystem.exception.InvalidBookingStateException;
 import com.ashutosh.HotelBookingSystem.exception.MissingValueException;
-import com.ashutosh.HotelBookingSystem.repository.BookingRepository;
-import com.ashutosh.HotelBookingSystem.repository.CommissionRepository;
-import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
-import com.ashutosh.HotelBookingSystem.repository.UserRepository;
+import com.ashutosh.HotelBookingSystem.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,6 +27,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AdminService {
+    private final SupportRequestRepository supportRequestRepository;
 
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
@@ -91,6 +92,7 @@ public class AdminService {
                 hotel.getAddressLine(),
                 hotel.getEmail(),
                 addressDTO,
+                hotel.getStatus(),
                 totalBooking,
                 completedBookings,
                 cancelledBooking,
@@ -140,7 +142,7 @@ public class AdminService {
         Hotel hotel = hotelRepository.findById(hotelId)
                 .orElseThrow(()-> new DataNotFoundException("Hotel not found with id: "+hotelId));
 
-        if(hotel.getState().equals(HotelStatus.APPROVED)){
+        if(hotel.getStatus() == (HotelStatus.APPROVED)){
             throw new InvalidBookingStateException("Hotel already approved");
         }
 
@@ -173,6 +175,35 @@ public class AdminService {
         hotel.setStatus(HotelStatus.BLOCKED);
 
         return "Hotel blocked Successfully";
+    }
+
+    @Transactional
+    public String unblockHotel(Long hotelId){
+
+        Hotel hotel = hotelRepository.findById(hotelId)
+                .orElseThrow(()-> new DataNotFoundException("Hotel not found"));
+
+        if(hotel.getStatus() != HotelStatus.BLOCKED){
+            throw new HotelRegisterException("Hotel is not blocked");
+        }
+
+        hotel.setStatus(HotelStatus.APPROVED);
+
+        return "Hotel unblocked successfully";
+    }
+
+    public List<SupportRequest> getOpenSupportRequests(){
+        return  supportRequestRepository.findByStatus(SupportStatus.OPEN);
+    }
+
+    @Transactional
+    public String resolveSupportRequest(Long requestId){
+        SupportRequest request = supportRequestRepository.findById(requestId)
+                .orElseThrow(()-> new DataNotFoundException("Support request not found"));
+
+        request.setStatus(SupportStatus.RESOLVED);
+
+        return "Support request resolved successfully";
     }
 
 }

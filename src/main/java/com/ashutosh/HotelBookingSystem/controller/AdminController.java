@@ -3,6 +3,7 @@ package com.ashutosh.HotelBookingSystem.controller;
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.dto.*;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
+import com.ashutosh.HotelBookingSystem.entity.SupportRequest;
 import com.ashutosh.HotelBookingSystem.service.AdminService;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
 import com.ashutosh.HotelBookingSystem.service.HotelService;
@@ -78,10 +79,27 @@ public class AdminController {
         return adminService.rejectHotel(hotelId,reason);
     }
 
-
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/hotel/{hotelId}/block")
     public String blockHotel(@PathVariable Long hotelId){
         return adminService.blockHotel(hotelId);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/hotel/{hotelId}/unblock")
+    public String unblockHotel(@PathVariable Long hotelId){
+        return adminService.unblockHotel(hotelId);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/support/open")
+    public List<SupportRequest> getOpenRequests(){
+        return adminService.getOpenSupportRequests();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/support/{id}/resolve")
+    public String resolveRequest(@PathVariable Long id){
+        return adminService.resolveSupportRequest(id);
     }
 }

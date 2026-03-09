@@ -1,5 +1,6 @@
 package com.ashutosh.HotelBookingSystem.dto;
 
+import com.ashutosh.HotelBookingSystem.Enum.HotelStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -11,5 +12,7 @@ public class HotelResponseDTO {
     private String hotelName;
     private AddressDTO address;
     private String phoneNo;
+
+    private HotelStatus status;
 
 }
