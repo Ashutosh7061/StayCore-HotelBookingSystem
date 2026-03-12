@@ -1,9 +1,10 @@
 package com.ashutosh.HotelBookingSystem.dto;
 
-import lombok.*;
+import lombok.Data;
 
-@Getter
-@Setter
-public class SupportRequestDTO {
+@Data
+public class SupportReplyDTO {
+
     private String message;
+
 }

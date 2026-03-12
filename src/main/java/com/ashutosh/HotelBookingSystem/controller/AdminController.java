@@ -99,7 +99,19 @@ public class AdminController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/support/{id}/resolve")
-    public String resolveRequest(@PathVariable Long id){
-        return adminService.resolveSupportRequest(id);
+    public String resolveRequest(@PathVariable String tokenId){
+        return adminService.resolveSupportRequest(tokenId);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/support/{id}/reply")
+    public String replyToSupportRequest(@PathVariable String tokenId, @RequestBody SupportReplyDTO request){
+        return adminService.replyToSupportRequest(tokenId, request.getMessage());
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/support/token/{tokenId}")
+    public SupportTicketResponseDTO getTicketByToken(@PathVariable String tokenId){
+        return adminService.getTicketByTokenAdmin(tokenId);
     }
 }

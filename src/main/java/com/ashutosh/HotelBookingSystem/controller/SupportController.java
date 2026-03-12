@@ -1,13 +1,12 @@
 package com.ashutosh.HotelBookingSystem.controller;
 
 
+import com.ashutosh.HotelBookingSystem.dto.SupportReplyDTO;
 import com.ashutosh.HotelBookingSystem.dto.SupportRequestDTO;
+import com.ashutosh.HotelBookingSystem.dto.SupportTicketResponseDTO;
 import com.ashutosh.HotelBookingSystem.service.SupportService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,5 +18,15 @@ public class SupportController {
     @PostMapping("/submit-query")
     public String createSupportRequest(@RequestBody SupportRequestDTO message){
         return supportService.createSupportRequest(message);
+    }
+
+    @GetMapping("/ticket/{tokenId}")
+    public SupportTicketResponseDTO getTicketStatus(@PathVariable String tokenId){
+        return supportService.getTicketByToken(tokenId);
+    }
+
+    @PostMapping("/ticket/{tokenId}/reply")
+    public String replyToTicket(@PathVariable String tokenId, @RequestBody SupportReplyDTO request){
+        return supportService.replyToTicketByUserOrHotel(tokenId, request.getMessage());
     }
 }

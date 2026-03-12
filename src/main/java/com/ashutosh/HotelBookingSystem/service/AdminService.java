@@ -1,14 +1,9 @@
 package com.ashutosh.HotelBookingSystem.service;
 
-import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
-import com.ashutosh.HotelBookingSystem.Enum.CommissionType;
-import com.ashutosh.HotelBookingSystem.Enum.HotelStatus;
-import com.ashutosh.HotelBookingSystem.Enum.SupportStatus;
-import com.ashutosh.HotelBookingSystem.dto.AddressDTO;
-import com.ashutosh.HotelBookingSystem.dto.AdminHotelDetailsDTO;
-import com.ashutosh.HotelBookingSystem.dto.AdminUserDetailsDTO;
-import com.ashutosh.HotelBookingSystem.dto.PlatformDashboardDTO;
+import com.ashutosh.HotelBookingSystem.Enum.*;
+import com.ashutosh.HotelBookingSystem.dto.*;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
+import com.ashutosh.HotelBookingSystem.entity.SupportMessage;
 import com.ashutosh.HotelBookingSystem.entity.SupportRequest;
 import com.ashutosh.HotelBookingSystem.entity.User;
 import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
@@ -27,12 +22,13 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AdminService {
-    private final SupportRequestRepository supportRequestRepository;
 
+    private final SupportRequestRepository supportRequestRepository;
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final CommissionRepository commissionRepository;
     private final HotelRepository hotelRepository;
+    private final SupportMessageRepository supportMessageRepository;
 
     public List<AdminUserDetailsDTO> getAllUsersForAdmin(){
 
@@ -197,13 +193,62 @@ public class AdminService {
     }
 
     @Transactional
-    public String resolveSupportRequest(Long requestId){
-        SupportRequest request = supportRequestRepository.findById(requestId)
+    public String resolveSupportRequest(String tokenId){
+        SupportRequest request = supportRequestRepository.findByTokenId(tokenId)
                 .orElseThrow(()-> new DataNotFoundException("Support request not found"));
 
         request.setStatus(SupportStatus.RESOLVED);
 
         return "Support request resolved successfully";
+    }
+
+    public String replyToSupportRequest(String tokenId, String message){
+
+        SupportRequest supportRequest = supportRequestRepository.findByTokenId(tokenId)
+                .orElseThrow(()-> new DataNotFoundException("Support request not found"));
+
+        SupportMessage supportMessage = new SupportMessage();
+
+        supportMessage.setSupportRequest(supportRequest);
+        supportMessage.setSenderRole(Role.ADMIN);
+        supportMessage.setMessage(message);
+
+        supportMessageRepository.save(supportMessage);
+
+        supportRequest.setStatus(SupportStatus.IN_PROGRESS);
+        supportRequestRepository.save(supportRequest);
+
+        return "Reply sent successfully";
+
+    }
+
+    public SupportTicketResponseDTO getTicketByTokenAdmin(String tokenId){
+
+        SupportRequest ticket = supportRequestRepository.findByTokenId(tokenId)
+                .orElseThrow(() -> new DataNotFoundException("Ticket not found"));
+
+        List<SupportMessage> messages =
+                supportMessageRepository.findBySupportRequestIdOrderByCreatedAtAsc(ticket.getId());
+
+        SupportTicketResponseDTO response = new SupportTicketResponseDTO();
+
+        response.setTokenId(ticket.getTokenId());
+        response.setStatus(ticket.getStatus());
+        response.setCreatedAt(ticket.getCreatedAt());
+
+        List<SupportTicketResponseDTO.MessageDTO> messageList =
+                messages.stream().map(msg -> {
+                    SupportTicketResponseDTO.MessageDTO dto =
+                            new SupportTicketResponseDTO.MessageDTO();
+                    dto.setSenderRole(msg.getSenderRole());
+                    dto.setMessage(msg.getMessage());
+                    dto.setCreatedAt(msg.getCreatedAt());
+                    return dto;
+                }).toList();
+
+        response.setMessage(messageList);
+
+        return response;
     }
 
 }

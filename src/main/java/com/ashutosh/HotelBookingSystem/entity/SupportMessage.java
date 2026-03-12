@@ -1,7 +1,7 @@
 package com.ashutosh.HotelBookingSystem.entity;
 
 import com.ashutosh.HotelBookingSystem.Enum.Role;
-import com.ashutosh.HotelBookingSystem.Enum.SupportStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -9,36 +9,27 @@ import java.time.LocalDateTime;
 
 @Entity
 @Data
-public class SupportRequest {
+public class SupportMessage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false, length = 20)
-    private String tokenId;
+    @ManyToOne
+    @JoinColumn(name = "support_request_id")
+    private SupportRequest supportRequest;
 
     @Enumerated(EnumType.STRING)
-    private Role role;
-
-    private Long referenceId;
-
-    private String requesterName;
-    private String requesterEmail;
+    private Role senderRole;
 
     @Column(length = 1000)
     private String message;
 
-    @Enumerated(EnumType.STRING)
-    private SupportStatus status;
-
     private LocalDateTime createdAt;
 
+    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
     @PrePersist
-    public void setDefaults(){
+    public void setCreatedAt(){
         this.createdAt = LocalDateTime.now();
-        this.status = SupportStatus.OPEN;
     }
-
-
 }
