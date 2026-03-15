@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ashutosh.HotelBookingSystem.Mapper.helperFunctions;
 
 import java.nio.file.AccessDeniedException;
+import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -51,6 +52,14 @@ public class BookingService {
 
         LocalDate checkInDate = request.getCheckInDate();
         LocalDate checkOutDate = request.getCheckOutDate();
+
+        Hotel hotel = hotelRepository.findById(request.getHotelId())
+                .orElseThrow(()-> new DataNotFoundException("Hotel not found"));
+
+        //check hotel status
+        if(hotel.getStatus() != HotelStatus.APPROVED){
+            throw new UnauthorizedAccessException("Hotel temporarily unavailable for new bookings");
+        }
 
         // Duplicate booking check
         List<Booking> existingBookings =
@@ -83,13 +92,6 @@ public class BookingService {
         User user = userRepository.findById(userId)
                         .orElseThrow(()-> new DataNotFoundException("User not found."));
 
-        Hotel hotel = hotelRepository.findById(request.getHotelId())
-                        .orElseThrow(()-> new DataNotFoundException("Hotel not found"));
-
-        //check hotel status
-        if(hotel.getStatus() != HotelStatus.APPROVED){
-            throw new UnauthorizedAccessException("Hotel temporarily unavailable for new bookings");
-        }
 
         List<Room> availableRooms = roomRepository
                         .findByHotel_IdAndRoomTypeAndStatus(request.getHotelId(), request.getRoomType(), RoomStatus.VACENT);
@@ -108,16 +110,20 @@ public class BookingService {
         for(int i = 0 ; i < request.getNoOfRooms() ; i++){
             Room room = availableRooms.get(i);
             room.setStatus(RoomStatus.BOOKED);
+
+            allottedRooms.add(room.getRoomNumber());
         }
 
         Booking booking = new Booking();
 
         booking.setUser(user);
+        booking.setBookingReferenceId(generateBookingReferenceId());
         booking.setHotel(hotel);
         booking.setRoomType(request.getRoomType());
         booking.setNumberOfRooms(request.getNoOfRooms());
         booking.setCheckInDate(checkInDate);
         booking.setCheckOutDate(checkOutDate);
+        booking.setCheckInInstruction(request.getCheckInInstruction());
         booking.setTotalPrice(totalPrice);
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setBookingTime(LocalDateTime.now());
@@ -127,10 +133,12 @@ public class BookingService {
 
         return new BookingResponseDTO(
                 savedBooking.getId(),
+                savedBooking.getBookingReferenceId(),
                 hotel.getId(),
                 hotel.getHotelName(),
                 (int)days,
                 request.getNoOfRooms(),
+                savedBooking.getCheckInInstruction(),
                 savedBooking.getCheckInDate(),
                 savedBooking.getCheckOutDate(),
                 totalPrice,
@@ -179,6 +187,7 @@ public class BookingService {
 
                     return new UserBookingResponseDTO(
                             booking.getId(),
+                            booking.getBookingReferenceId(),
                             booking.getHotel().getHotelName(),
                             addressDTO,
                             days,
@@ -213,6 +222,7 @@ public class BookingService {
 
                     return new HotelBookingSummaryDTO(
                             booking.getId(),
+                            booking.getBookingReferenceId(),
                             booking.getUser().getName(),
                             booking.getUser().getPhoneNo(),
                             booking.getCheckInDate(),
@@ -284,6 +294,7 @@ public class BookingService {
 
         return new BookingSummaryDTO(
                 booking.getId(),
+                booking.getBookingReferenceId(),
 
                 booking.getHotel().getId(),
                 booking.getHotel().getHotelName(),
@@ -468,15 +479,39 @@ public class BookingService {
         booking.setStatus(BookingStatus.CANCELLED);
         booking.setCancelledBy(cancelledBy);
 
-        List<String> roomNumbers = booking.getAllottedRoomNumber();
+        List<Room> rooms;
 
-        List<Room> rooms = roomRepository.findByHotel_Id(booking.getHotel().getId());
+        // CASE 1 : Cancel before check-in
+        if(booking.getAllottedRoomNumber() == null || booking.getAllottedRoomNumber().isEmpty()){
+            rooms = roomRepository.findByHotel_IdAndRoomTypeAndStatus(
+                    booking.getHotel().getId(),
+                    booking.getRoomType(),
+                    RoomStatus.BOOKED
+            );
+            if(rooms.size() < booking.getNumberOfRooms()){
+                throw new IllegalStateException("Not enough booked rooms found to release");
+            }
+            for(int i = 0; i < booking.getNumberOfRooms(); i++){
+                rooms.get(i).setStatus(RoomStatus.VACENT);
+            }
+        }
 
-        for(Room room : rooms){
-            if(roomNumbers.contains(room.getRoomNumber())){
+        // CASE 2 : Cancel after check-in
+        else{
+            List<String> roomNumbers = booking.getAllottedRoomNumber();
+            rooms = roomRepository.findByHotel_IdAndRoomNumberIn(
+                    booking.getHotel().getId(),
+                    roomNumbers
+            );
+            for(Room room : rooms){
                 room.setStatus(RoomStatus.VACENT);
             }
         }
+
+        roomRepository.saveAll(rooms);
+        bookingRepository.save(booking);
+
+
         return new CancellationResponseDTO(
                 booking.getId(),
                 cancelledBy.name(),
@@ -505,5 +540,23 @@ public class BookingService {
                      booking.getReview()
                 ))
                 .toList();
+    }
+
+    public  String generateBookingReferenceId(){
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        SecureRandom random = new SecureRandom();
+        String bookingReferenceId;
+
+        do{
+            StringBuilder builder = new StringBuilder("HTL-");
+
+            for(int i = 0; i < 6 ; i++){
+                int index = random.nextInt(characters.length());
+                builder.append(characters.charAt(index));
+            }
+            bookingReferenceId = builder.toString();
+        }while (bookingRepository.findByBookingReferenceId(bookingReferenceId).isPresent());
+
+        return bookingReferenceId;
     }
 }

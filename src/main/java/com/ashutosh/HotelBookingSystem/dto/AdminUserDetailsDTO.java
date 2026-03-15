@@ -1,5 +1,6 @@
 package com.ashutosh.HotelBookingSystem.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,7 @@ public class AdminUserDetailsDTO {
     private String email;
     private String phoneNo;
 
+    @JsonFormat(pattern = "dd-MM-yyyy HH-mm-ss")
     private LocalDateTime registrationDate;
 
     private Double totalSpend;

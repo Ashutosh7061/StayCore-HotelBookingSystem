@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class HotelBookingSummaryDTO {
 
     private Long bookingId;
-
+    private String bookingReferenceId;
     private String userName;
     private String userPhoneNO;
 

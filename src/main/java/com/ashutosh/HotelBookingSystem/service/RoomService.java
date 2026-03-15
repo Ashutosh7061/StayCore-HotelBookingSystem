@@ -1,5 +1,7 @@
 package com.ashutosh.HotelBookingSystem.service;
 
+import com.ashutosh.HotelBookingSystem.dto.AddRoomRequestDTO;
+import com.ashutosh.HotelBookingSystem.dto.AddRoomResponseDTO;
 import com.ashutosh.HotelBookingSystem.dto.AdminRoomDTO;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.entity.Room;
@@ -23,7 +25,7 @@ public class RoomService {
     private final CommissionService commissionService;
     private final HotelService hotelService;
 
-    public Room addRoom(Room room){
+    public AddRoomResponseDTO addRoom(AddRoomRequestDTO request){
 
         CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long hotelId = loggedUser.getReferenceId();
@@ -34,17 +36,28 @@ public class RoomService {
 
         hotelService.validateHotelOperation(hotel);
 
-        if(roomRepository.findByHotel_IdAndRoomNumber(hotelId,room.getRoomNumber()).isPresent()){
+        if(roomRepository.findByHotel_IdAndRoomNumber(hotelId,request.getRoomNumber()).isPresent()){
             throw new DuplicateDataException("Room number already exists in this hotel");
         }
 
+        Room room = new Room();
+        room.setRoomNumber(request.getRoomNumber());
+        room.setRoomType(request.getRoomType());
+        room.setPrice(request.getPrice());
+        room.setStatus(request.getStatus());
         room.setHotel(hotel);
 
         Room savedRoom = roomRepository.save(room);
 
         commissionService.addRoomRegistrationCommissionFee(hotel);
 
-        return roomRepository.save(room);
+        return new AddRoomResponseDTO(
+                savedRoom.getId(),
+                savedRoom.getRoomNumber(),
+                savedRoom.getRoomType().toString(),
+                savedRoom.getPrice(),
+                savedRoom.getStatus()
+        );
     }
 
     public List<AdminRoomDTO> getRoomsByHotel(Long hotelId){

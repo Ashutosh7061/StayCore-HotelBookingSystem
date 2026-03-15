@@ -7,10 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AdminHotelDetailsDTO {
-
-    private HotelFullInfoDTO hotelInfo;
-    private BookingStatsDTO bookingStats;
-    private FinancialStatsDTO financialStats;
-
+public class HotelDashboardFinancialStatsDTO {
+    private Double totalBookingRevenue;
+    private Double totalCommission;
+    private Double netEarning;
 }

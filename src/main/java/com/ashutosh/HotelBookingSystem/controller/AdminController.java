@@ -63,7 +63,7 @@ public class AdminController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/hotels/pending")
-    public List<Hotel> getPendingHotels(){
+    public AdminPendingHotelResponseDTO getPendingHotels(){
         return adminService.getPendingHotels();
     }
 
@@ -98,13 +98,13 @@ public class AdminController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/support/{id}/resolve")
+    @PutMapping("/support/{tokenId}/resolve")
     public String resolveRequest(@PathVariable String tokenId){
         return adminService.resolveSupportRequest(tokenId);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/support/{id}/reply")
+    @PostMapping("/support/{tokenId}/reply")
     public String replyToSupportRequest(@PathVariable String tokenId, @RequestBody SupportReplyDTO request){
         return adminService.replyToSupportRequest(tokenId, request.getMessage());
     }

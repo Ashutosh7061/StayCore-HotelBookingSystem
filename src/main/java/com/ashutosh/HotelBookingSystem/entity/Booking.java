@@ -21,6 +21,8 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String bookingReferenceId;
+
     private int numberOfRooms;
     private double totalPrice;
     private String roomType;
@@ -36,6 +38,8 @@ public class Booking {
     private LocalDate checkInDate;
     @JsonFormat(pattern = "MM-dd-yyyy")
     private LocalDate checkOutDate;
+
+    private String checkInInstruction;
 
     // RelationShip Creation
 

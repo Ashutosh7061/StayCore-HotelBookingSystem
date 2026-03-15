@@ -10,6 +10,7 @@ import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.entity.Room;
 import com.ashutosh.HotelBookingSystem.exception.*;
 import com.ashutosh.HotelBookingSystem.repository.BookingRepository;
+import com.ashutosh.HotelBookingSystem.repository.CommissionRepository;
 import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
 import com.ashutosh.HotelBookingSystem.repository.RoomRepository;
 import com.ashutosh.HotelBookingSystem.security.CustomUserDetails;
@@ -31,6 +32,7 @@ public class HotelService {
     private final BookingRepository bookingRepository;
     private final RoomRepository roomRepository;
     private final CommissionService commissionService;
+    private final CommissionRepository commissionRepository;
 
     public List<HotelResponseDTO> getAllHotels() {
         List<Hotel> hotels = hotelRepository.findAll();
@@ -49,6 +51,7 @@ public class HotelService {
                             hotel.getHotelName(),
                             addressDTO,
                             hotel.getPhoneNo(),
+                            hotel.getCreatedAt(),
                             hotel.getStatus()
                     );
                 })
@@ -75,13 +78,8 @@ public class HotelService {
         String role = loggedUser.getRole();
         Long hotelId = loggedUser.getReferenceId();
 
-        if(!loggedUser.getRole().equals("HOTEL")){
-            throw new UnauthorizedAccessException("Only hotel can perform check-in");
-        }
-
         Booking booking = bookingRepository.findById(request.getBookingId())
                 .orElseThrow(()-> new DataNotFoundException("Booking not found."));
-
 
         validateHotelOperation(booking.getHotel());
 
@@ -96,8 +94,8 @@ public class HotelService {
             throw new BookingCheckInException("Check-in is allowed only on check-in date or between booking dates.");
         }
         // verifying user identity
-        if(!booking.getUser().getId().equals(request.getUserId())){
-            throw new IllegalArgumentException("User mismatch");
+        if(booking.getBookingReferenceId().equals(request.getBookingReferenceId())){
+            throw new IllegalArgumentException("Booking reference mismatched");
         }
         if(!booking.getUser().getUniqueIdNumber().equals(request.getUniqueIdNumber())){
             throw new InvalidIdNumberException("Invalid ID proof");
@@ -204,17 +202,21 @@ public class HotelService {
     }
 
     public void validateHotelOperation(Hotel hotel){
-        if(hotel.getStatus() == HotelStatus.PENDING){
-            throw new UnauthorizedAccessException("Hotel account is pending spproval by admin");
-        }
 
-        if(hotel.getStatus() == HotelStatus.REJECTED){
-            throw new UnauthorizedAccessException("Hotel application was rejected. Please reapply");
+        if(hotel.getStatus() != HotelStatus.APPROVED){
+            throw new UnauthorizedAccessException("Hotel is not approved for doing activities");
         }
-
-        if(hotel.getStatus() == HotelStatus.BLOCKED){
-            throw new UnauthorizedAccessException("Hotel account has been blocked by platform");
-        }
+//        if(hotel.getStatus() == HotelStatus.PENDING){
+//            throw new UnauthorizedAccessException("Hotel account is pending approval by admin");
+//        }
+//
+//        if(hotel.getStatus() == HotelStatus.REJECTED){
+//            throw new UnauthorizedAccessException("Hotel application was rejected. Please reapply");
+//        }
+//
+//        if(hotel.getStatus() == HotelStatus.BLOCKED){
+//            throw new UnauthorizedAccessException("Hotel account has been blocked by platform");
+//        }
     }
 
     public List<Hotel> getAllAvailableHotels() {
@@ -227,7 +229,8 @@ public class HotelService {
 
         Long hotelId = loggedUser.getReferenceId();
 
-        Hotel hotel = hotelRepository.findById(hotelId).orElseThrow(()-> new DataNotFoundException("Hotel not found"));
+        Hotel hotel = hotelRepository.findById(hotelId)
+                .orElseThrow(()-> new DataNotFoundException("Hotel not found"));
 
         if(hotel.getStatus() != HotelStatus.REJECTED){
             throw new HotelRegisterException("Only rejected hotels can reapply");
@@ -237,5 +240,58 @@ public class HotelService {
         hotel.setRejectionReason(null);
 
         return "Hotel reapplied successfully. Waiting for admin approval";
+    }
+
+
+    public HotelDashboardDTO getHotelDashboard(){
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Long hotelId = loggedUser.getReferenceId();
+
+        Hotel hotel = hotelRepository.findById(hotelId)
+                .orElseThrow(()-> new DataNotFoundException("Hotel not found"));
+
+        Long totalRooms = roomRepository.countByHotel_Id(hotelId);
+
+        Long totalBooking = (Long)bookingRepository.countByHotelId(hotelId);
+        long completedBookings = bookingRepository.countByHotelIdAndStatus(hotelId,BookingStatus.COMPLETED);
+        long cancelledBooking = bookingRepository.countByHotelIdAndStatus(hotelId, BookingStatus.CANCELLED);
+        long confirmedBookings  = bookingRepository.countByHotelIdAndStatus(hotelId, BookingStatus.CONFIRMED);
+
+
+        Double totalBookingRevenue = bookingRepository.getTotalBookingRevenue(hotelId);
+        Double totalCommission = commissionRepository.getTotalCommissionByHotelId(hotelId);
+        Double netEarning = totalBookingRevenue - totalCommission;
+
+        HotelDashboardInfoDTO hotelInfo = new HotelDashboardInfoDTO(
+                hotel.getId(),
+                hotel.getHotelName(),
+                hotel.getStatus(),
+                hotel.getCreatedAt()
+        );
+
+        HotelDashboardRoomStatsDTO roomInfo = new HotelDashboardRoomStatsDTO(
+                totalRooms
+        );
+
+        HotelDashboardBookingStatsDTO bookingInfo = new HotelDashboardBookingStatsDTO(
+                totalBooking,
+                confirmedBookings,
+                completedBookings,
+                cancelledBooking
+        );
+
+        HotelDashboardFinancialStatsDTO financialInfo = new HotelDashboardFinancialStatsDTO(
+                totalBookingRevenue,
+                totalCommission,
+                netEarning
+        );
+
+        return new HotelDashboardDTO(
+                hotelInfo,
+                roomInfo,
+                bookingInfo,
+                financialInfo
+        );
     }
 }

@@ -2,6 +2,7 @@ package com.ashutosh.HotelBookingSystem.entity;
 
 
 import com.ashutosh.HotelBookingSystem.Enum.HotelStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
@@ -9,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -69,6 +71,14 @@ public class Hotel {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private HotelStatus status;
+
+    @JsonFormat(pattern = "MM-dd-yyyy HH:mm:ss")
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    public void setCreatedAt(){
+        this.createdAt = LocalDateTime.now();
+    }
 
     private String rejectionReason;
 

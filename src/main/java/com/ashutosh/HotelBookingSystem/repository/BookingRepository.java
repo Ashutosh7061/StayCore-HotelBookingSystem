@@ -2,11 +2,13 @@ package com.ashutosh.HotelBookingSystem.repository;
 
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.entity.Booking;
+import com.ashutosh.HotelBookingSystem.entity.SupportRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
@@ -67,7 +69,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByStatus(BookingStatus status);
 
-    List<Booking> findByRatingIsNotNull();
 
     @Query("""
        SELECT COALESCE(AVG(b.rating), 0)
@@ -84,4 +85,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     long countByHotelIdAndStatus(Long hotelId, BookingStatus status);
 
     List<Booking> findByHotel_Id(Long hotelId);
+
+    @Query("""
+        SELECT COALESCE(SUM(b.totalPrice),0)
+        FROM Booking b
+        WHERE b.hotel.id = :hotelId
+    """)
+    Double getTotalBookingRevenue(Long hotelId);
+
+    Optional<Booking> findByBookingReferenceId(String bookingReferenceId);
 }

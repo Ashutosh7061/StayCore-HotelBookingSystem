@@ -5,10 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class CheckInRequestDTO {
-    private Long bookingId;
-    private String bookingReferenceId;
-    private String uniqueIdNumber;
+@NoArgsConstructor
+public class HotelDashboardRoomStatsDTO {
+    private Long totalRooms;
 }

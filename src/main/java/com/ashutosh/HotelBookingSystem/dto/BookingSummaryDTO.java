@@ -15,6 +15,7 @@ import java.util.List;
 public class BookingSummaryDTO {
 
     private Long bookingId;
+    private String bookingReferenceId;
 
     private Long hotelId;
     private String hotelName;

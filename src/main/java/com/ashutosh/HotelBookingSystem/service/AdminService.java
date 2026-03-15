@@ -29,6 +29,7 @@ public class AdminService {
     private final CommissionRepository commissionRepository;
     private final HotelRepository hotelRepository;
     private final SupportMessageRepository supportMessageRepository;
+    private final RoomRepository roomRepository;
 
     public List<AdminUserDetailsDTO> getAllUsersForAdmin(){
 
@@ -75,6 +76,10 @@ public class AdminService {
                 commissionRepository.getCommissionByHotelIdAndType(
                         hotelId, CommissionType.REGISTRATION);
 
+        Long totalRooms = roomRepository.countByHotel_Id(hotelId);
+
+        Double totalBookingRevenue = bookingRepository.getTotalBookingRevenue(hotelId);
+
         AddressDTO addressDTO = new AddressDTO(
                 hotel.getAddressLine(),
                 hotel.getCity(),
@@ -82,21 +87,40 @@ public class AdminService {
                 hotel.getPinCode()
         );
 
-        return new AdminHotelDetailsDTO(
+        HotelFullInfoDTO hotelInfo = new HotelFullInfoDTO(
                 hotel.getId(),
                 hotel.getHotelName(),
-                hotel.getAddressLine(),
+                hotel.getRegisteredOwnerName(),
+                hotel.getPhoneNo(),
                 hotel.getEmail(),
+                hotel.getGstNo(),
+                hotel.getGovtRegisteredNo(),
                 addressDTO,
                 hotel.getStatus(),
+                hotel.getCreatedAt()
+        );
+
+        BookingStatsDTO bookingStats = new BookingStatsDTO(
+                totalRooms,
                 totalBooking,
-                completedBookings,
-                cancelledBooking,
                 confirmedBookings,
+                completedBookings,
+                cancelledBooking
+        );
+
+        FinancialStatsDTO financialStats = new FinancialStatsDTO(
+                totalBookingRevenue,
                 totalCommission,
                 bookingCommission,
                 registrationCommission
         );
+
+        return new AdminHotelDetailsDTO(
+          hotelInfo,
+          bookingStats,
+          financialStats
+        );
+
     }
 
     public PlatformDashboardDTO getPlatformDashboard() {
@@ -121,15 +145,43 @@ public class AdminService {
                 totalPlatformEarnings
         );
     }
-
-
-    public List<Hotel> getPendingHotels(){
+    
+    public AdminPendingHotelResponseDTO getPendingHotels(){
         List<Hotel> hotels = hotelRepository.findByStatus(HotelStatus.PENDING);
 
         if(hotels.isEmpty()){
             throw new DataNotFoundException("No pending hotels found");
         }
-        return hotels;
+
+        List<AdminHotelApprovingDTO> hotelList = hotels.stream()
+                .map(hotel -> {
+
+                    AddressDTO address = new AddressDTO();
+                    address.setAddressLine(hotel.getAddressLine());
+                    address.setCity(hotel.getCity());
+                    address.setState(hotel.getState());
+                    address.setPinCode(hotel.getPinCode());
+
+                    AdminHotelApprovingDTO dto = new AdminHotelApprovingDTO();
+
+                    dto.setHotelId(hotel.getId());
+                    dto.setHotelName(hotel.getHotelName());
+                    dto.setAddress(address);
+                    dto.setCreatedAt(hotel.getCreatedAt());
+                    dto.setEmail(hotel.getEmail());
+                    dto.setPhoneNo(hotel.getPhoneNo());
+                    dto.setOwnerName(hotel.getRegisteredOwnerName());
+                    dto.setGstNo(hotel.getGstNo());
+                    dto.setGovtRegisteredNo(hotel.getGovtRegisteredNo());
+                    dto.setStatus(hotel.getStatus());
+
+                    return dto;
+                }).toList();
+
+        return new AdminPendingHotelResponseDTO(
+                (long) hotels.size(),
+                hotelList
+        );
     }
 
     @Transactional
@@ -145,7 +197,7 @@ public class AdminService {
         hotel.setStatus(HotelStatus.APPROVED);
         hotel.setRejectionReason(null);
 
-        return "Hotel approved successfully";
+        return "Hotel "+ hotel.getHotelName() +" approved successfully";
     }
 
 
@@ -161,31 +213,30 @@ public class AdminService {
         hotel.setStatus(HotelStatus.REJECTED);
         hotel.setRejectionReason(reason);
 
-        return "Hotel rejected successfully";
+        return "Hotel "+ hotel.getHotelName() +" rejected successfully";
     }
 
     @Transactional
     public String blockHotel(Long hotelId){
-        Hotel hotel = hotelRepository.findById(hotelId).orElseThrow(()-> new DataNotFoundException("Hotel not found with id: "+ hotelId));
+        Hotel hotel = hotelRepository.findById(hotelId)
+                .orElseThrow(()-> new DataNotFoundException("Hotel not found with id: "+ hotelId));
 
         hotel.setStatus(HotelStatus.BLOCKED);
 
-        return "Hotel blocked Successfully";
+        return "Hotel "+ hotel.getHotelName() +" approved successfully";
     }
 
     @Transactional
     public String unblockHotel(Long hotelId){
-
         Hotel hotel = hotelRepository.findById(hotelId)
                 .orElseThrow(()-> new DataNotFoundException("Hotel not found"));
 
         if(hotel.getStatus() != HotelStatus.BLOCKED){
             throw new HotelRegisterException("Hotel is not blocked");
         }
-
         hotel.setStatus(HotelStatus.APPROVED);
 
-        return "Hotel unblocked successfully";
+        ;return "Hotel "+ hotel.getHotelName() +" approved successfully";
     }
 
     public List<SupportRequest> getOpenSupportRequests(){

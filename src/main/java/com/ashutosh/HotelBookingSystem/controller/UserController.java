@@ -4,17 +4,15 @@ import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.Enum.CancelledBy;
 import com.ashutosh.HotelBookingSystem.dto.*;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
-import com.ashutosh.HotelBookingSystem.entity.User;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
 import com.ashutosh.HotelBookingSystem.service.HotelService;
 import com.ashutosh.HotelBookingSystem.service.UserService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -22,7 +20,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserService userService;
     private final BookingService bookingService;
     private final HotelService hotelService;
 
@@ -33,9 +30,12 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('USER')")
-    @PostMapping
-    public BookingResponseDTO bookRoom(@RequestBody UserBookingRequestDTO request){
-        return bookingService.bookRoom(request);
+    @PostMapping("/make-booking")
+    public ResponseEntity<ApiResponseDTO> bookRoom(@RequestBody UserBookingRequestDTO request){
+        BookingResponseDTO  addedRoom = bookingService.bookRoom(request);
+        ApiResponseDTO response = new ApiResponseDTO("Your booking is successfully completed", addedRoom);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PreAuthorize("hasRole('USER')")
@@ -49,12 +49,16 @@ public class UserController {
 
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/bookings/{bookingId}/cancelBooking")
-    public CancellationResponseDTO cancelBooking(
+    public ResponseEntity<ApiResponseDTO> cancelBooking(
             @PathVariable Long bookingId,
             @RequestParam CancelledBy cancelledBy,
             @RequestParam(required = true) String reason){
 
-        return bookingService.cancelBooking(bookingId, cancelledBy, reason);
+        CancellationResponseDTO cancelled = bookingService.cancelBooking(bookingId, cancelledBy, reason);
+
+        ApiResponseDTO response = new ApiResponseDTO("Your booking is successfully cancelled", cancelled);
+
+        return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasRole('USER')")

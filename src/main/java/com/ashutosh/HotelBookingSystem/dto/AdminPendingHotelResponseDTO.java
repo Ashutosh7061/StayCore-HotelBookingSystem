@@ -1,16 +1,18 @@
 package com.ashutosh.HotelBookingSystem.dto;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AdminHotelDetailsDTO {
+public class AdminPendingHotelResponseDTO {
 
-    private HotelFullInfoDTO hotelInfo;
-    private BookingStatsDTO bookingStats;
-    private FinancialStatsDTO financialStats;
+    private Long totalPending;
+    private List<AdminHotelApprovingDTO> hotels;
 
 }

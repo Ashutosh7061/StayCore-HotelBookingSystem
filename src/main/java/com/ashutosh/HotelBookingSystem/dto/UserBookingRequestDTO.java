@@ -22,5 +22,7 @@ public class UserBookingRequestDTO {
     @JsonFormat(pattern = "dd-MM-yyyy")
     private LocalDate checkOutDate;
 
+    private String checkInInstruction;
+
     private  Boolean duplicateBooking;
 }

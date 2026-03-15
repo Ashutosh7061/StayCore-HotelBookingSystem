@@ -1,17 +1,15 @@
 package com.ashutosh.HotelBookingSystem.controller;
 
 
+import com.ashutosh.HotelBookingSystem.Enum.CancelledBy;
 import com.ashutosh.HotelBookingSystem.dto.*;
-import com.ashutosh.HotelBookingSystem.entity.Room;
-import com.ashutosh.HotelBookingSystem.security.CustomUserDetails;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
 import com.ashutosh.HotelBookingSystem.service.HotelService;
 import com.ashutosh.HotelBookingSystem.service.RoomService;
-import com.ashutosh.HotelBookingSystem.service.SupportService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,13 +22,30 @@ public class HotelController {
     private final HotelService hotelService;
     private final BookingService bookingService;
     private final RoomService roomService;
-    private final SupportService supportService;
 
 
     @PreAuthorize("hasRole('HOTEL')")
     @PostMapping("/addRoom")
-    public Room addRoom(@RequestBody Room room){
-        return roomService.addRoom( room);
+    public ResponseEntity<ApiResponseDTO> addRoom(@RequestBody AddRoomRequestDTO room){
+
+        AddRoomResponseDTO  addedRoom = roomService.addRoom(room);
+        ApiResponseDTO response = new ApiResponseDTO("Room added successfully", addedRoom);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PreAuthorize("hasRole('HOTEL')")
+    @PutMapping("/bookings/{bookingId}/cancelBooking")
+    public ResponseEntity<ApiResponseDTO> cancelBooking(
+            @PathVariable Long bookingId,
+            @RequestParam CancelledBy cancelledBy,
+            @RequestParam(required = true) String reason){
+
+        CancellationResponseDTO cancelled = bookingService.cancelBooking(bookingId, cancelledBy, reason);
+
+        ApiResponseDTO response = new ApiResponseDTO("Booking successfully cancelled", cancelled);
+
+        return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasRole('HOTEL')")
@@ -63,5 +78,10 @@ public class HotelController {
         return hotelService.reapplyHotel();
     }
 
+    @PreAuthorize("hasRole('HOTEL')")
+    @GetMapping("/dashboard")
+    public HotelDashboardDTO getHotelDashboard(){
+        return hotelService.getHotelDashboard();
+    }
 
 }
