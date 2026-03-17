@@ -1,6 +1,5 @@
 package com.ashutosh.HotelBookingSystem.dto;
 
-import com.ashutosh.HotelBookingSystem.Enum.RoomStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,12 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AddRoomResponseDTO {
-
-    private Long roomId;
-    private String roomNumber;
+public class RoomUpdateDTO {
     private String roomType;
-    private double price;
-    private RoomStatus status;
-
+    private Double price;
 }

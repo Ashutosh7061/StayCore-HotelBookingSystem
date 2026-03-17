@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class HotelDashboardDTO {
     private HotelDashboardInfoDTO hotelInfo;
-    private HotelDashboardRoomStatsDTO roomInfo;
-    private HotelDashboardBookingStatsDTO bookingInfo;
-    private HotelDashboardFinancialStatsDTO financialInfo;
+    private HotelDashboardRoomStatsDTO roomStats;
+    private HotelDashboardBookingStatsDTO bookingStats;
+    private HotelDashboardFinancialStatsDTO financialStats;
 }

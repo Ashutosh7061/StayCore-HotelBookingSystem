@@ -76,7 +76,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
        WHERE b.hotel.id = :hotelId
        AND b.rating IS NOT NULL
        """)
-    Double getAverageRatingByHotelId(Long hotelId);
 
     Long countByStatus(BookingStatus status);
 
@@ -94,4 +93,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     Double getTotalBookingRevenue(Long hotelId);
 
     Optional<Booking> findByBookingReferenceId(String bookingReferenceId);
+
+    long countByUser_Id(Long userId);
 }

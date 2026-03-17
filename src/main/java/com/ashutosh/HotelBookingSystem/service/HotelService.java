@@ -3,7 +3,6 @@ package com.ashutosh.HotelBookingSystem.service;
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.Enum.HotelStatus;
 import com.ashutosh.HotelBookingSystem.Enum.RoomStatus;
-import com.ashutosh.HotelBookingSystem.Mapper.helperFunctions;
 import com.ashutosh.HotelBookingSystem.dto.*;
 import com.ashutosh.HotelBookingSystem.entity.Booking;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
@@ -293,5 +292,80 @@ public class HotelService {
                 bookingInfo,
                 financialInfo
         );
+    }
+
+    public HotelProfileResponseDTO getHotelProfile(){
+
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Long hotelId = loggedUser.getReferenceId();
+
+        Hotel hotel = hotelRepository.findById(hotelId)
+                .orElseThrow(()-> new DataNotFoundException("Hotel not found"));
+
+        return mapHotelToProfileDTO(hotel);
+    }
+
+    public HotelProfileResponseDTO updateHotelProfile(HotelProfileUpdateDTO request){
+
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Long hotelId = loggedUser.getReferenceId();
+
+        Hotel hotel = hotelRepository.findById(hotelId)
+                .orElseThrow(()-> new DataNotFoundException("Hotel not found"));
+
+        if(request.getPhoneNo() != null && !request.getPhoneNo().isBlank()){
+            hotel.setPhoneNo(request.getPhoneNo());
+        }
+
+
+        if(request.getAddress() != null){
+            if(request.getAddress().getAddressLine() != null){
+                hotel.setAddressLine(request.getAddress().getAddressLine());
+            }
+
+            if(request.getAddress().getCity() != null){
+                hotel.setCity(request.getAddress().getCity());
+            }
+
+            if(request.getAddress().getState() != null){
+                hotel.setState(request.getAddress().getState());
+            }
+
+            if(request.getAddress().getPinCode() != null){
+                hotel.setPinCode(request.getAddress().getPinCode());
+            }
+        }
+
+        hotelRepository.save(hotel);
+
+        return mapHotelToProfileDTO(hotel);
+    }
+
+    private HotelProfileResponseDTO mapHotelToProfileDTO(Hotel hotel){
+
+        AddressDTO address = new AddressDTO();
+        address.setAddressLine(hotel.getAddressLine());
+        address.setCity(hotel.getCity());
+        address.setState(hotel.getState());
+        address.setPinCode(hotel.getPinCode());
+
+        HotelProfileResponseDTO dto = new HotelProfileResponseDTO();
+
+        dto.setHotelId(hotel.getId());
+        dto.setHotelName(hotel.getHotelName());
+        dto.setOwnerName(hotel.getRegisteredOwnerName());
+        dto.setPhoneNo(hotel.getPhoneNo());
+        dto.setEmail(hotel.getEmail());
+
+        dto.setGstNo(hotel.getGstNo());
+        dto.setGovtRegisteredNo(hotel.getGovtRegisteredNo());
+
+        dto.setAddress(address);
+        dto.setStatus(hotel.getStatus());
+        dto.setCreatedAt(hotel.getCreatedAt());
+
+        return dto;
     }
 }

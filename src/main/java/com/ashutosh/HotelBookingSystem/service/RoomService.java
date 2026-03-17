@@ -1,12 +1,16 @@
 package com.ashutosh.HotelBookingSystem.service;
 
+import com.ashutosh.HotelBookingSystem.Enum.RoomStatus;
 import com.ashutosh.HotelBookingSystem.dto.AddRoomRequestDTO;
-import com.ashutosh.HotelBookingSystem.dto.AddRoomResponseDTO;
+import com.ashutosh.HotelBookingSystem.dto.RoomResponseDTO;
 import com.ashutosh.HotelBookingSystem.dto.AdminRoomDTO;
+import com.ashutosh.HotelBookingSystem.dto.RoomUpdateDTO;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.entity.Room;
 import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
 import com.ashutosh.HotelBookingSystem.exception.DuplicateDataException;
+import com.ashutosh.HotelBookingSystem.exception.RoomNotModifiableException;
+import com.ashutosh.HotelBookingSystem.exception.UnauthorizedAccessException;
 import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
 import com.ashutosh.HotelBookingSystem.repository.RoomRepository;
 import com.ashutosh.HotelBookingSystem.security.CustomUserDetails;
@@ -25,7 +29,7 @@ public class RoomService {
     private final CommissionService commissionService;
     private final HotelService hotelService;
 
-    public AddRoomResponseDTO addRoom(AddRoomRequestDTO request){
+    public RoomResponseDTO addRoom(AddRoomRequestDTO request){
 
         CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long hotelId = loggedUser.getReferenceId();
@@ -51,7 +55,7 @@ public class RoomService {
 
         commissionService.addRoomRegistrationCommissionFee(hotel);
 
-        return new AddRoomResponseDTO(
+        return new RoomResponseDTO(
                 savedRoom.getId(),
                 savedRoom.getRoomNumber(),
                 savedRoom.getRoomType().toString(),
@@ -76,5 +80,53 @@ public class RoomService {
                 ))
                 .toList();
 
+    }
+
+    public RoomResponseDTO updateRoom(String roomNo, RoomUpdateDTO request){
+
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+                             
+        Long hotelId = loggedUser.getReferenceId();
+
+        Room room = roomRepository.findByHotel_IdAndRoomNumber(hotelId, roomNo)
+                .orElseThrow(()-> new DataNotFoundException("Room not found"));
+
+        if(room.getStatus() != RoomStatus.VACENT){
+            throw new RoomNotModifiableException("You can not modify the room, until it is vacant");
+        }
+
+        if(request.getRoomType() != null){
+            room.setRoomType(request.getRoomType());
+        }
+        if(request.getPrice() != null){
+            room.setPrice(request.getPrice());
+        }
+
+        roomRepository.save(room);
+
+        return new RoomResponseDTO(
+                room.getId(),
+                room.getRoomNumber(),
+                room.getRoomType(),
+                room.getPrice(),
+                room.getStatus()
+        );
+    }
+
+    public String deleteRoom(String roomNo){
+
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Long hotelId = loggedUser.getReferenceId();
+
+        Room room = roomRepository.findByHotel_IdAndRoomNumber(hotelId, roomNo)
+                .orElseThrow(()-> new DataNotFoundException("Room not found"));
+
+        if(room.getStatus() != RoomStatus.VACENT){
+            throw new RoomNotModifiableException("You can not modify the room, until it is vacant");
+        }
+        roomRepository.delete(room);
+
+        return "Room deleted successfully";
     }
 }

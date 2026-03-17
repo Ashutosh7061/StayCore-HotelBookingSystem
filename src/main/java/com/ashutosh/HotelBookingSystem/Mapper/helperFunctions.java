@@ -7,9 +7,7 @@ import com.ashutosh.HotelBookingSystem.exception.InvalidIdNumberException;
 import com.ashutosh.HotelBookingSystem.exception.InvalidPhoneNumberException;
 import com.ashutosh.HotelBookingSystem.repository.BookingRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
-import java.security.SecureRandom;
 import java.time.temporal.ChronoUnit;
 
 @RequiredArgsConstructor

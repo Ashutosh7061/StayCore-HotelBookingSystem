@@ -22,6 +22,7 @@ public class UserController {
 
     private final BookingService bookingService;
     private final HotelService hotelService;
+    private final UserService userService;
 
 
     @GetMapping("/allAvailableHotels")
@@ -65,5 +66,28 @@ public class UserController {
     @GetMapping("/{bookingId}/summary")
     public ResponseEntity<BookingSummaryDTO> getBookingSummary(@PathVariable Long bookingId){
         return ResponseEntity.ok(bookingService.getBookingSummary(bookingId));
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/profile")
+    public ResponseEntity<UserProfileResponseDTO> getUserProfile(){
+        return ResponseEntity.ok(userService.getUserProfile());
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @PutMapping("/profile")
+    public ResponseEntity<ApiResponseDTO> updateUserProfile(@RequestBody UserProfileUpdateDTO request){
+
+        UserProfileResponseDTO updatedUser = userService.updateUserProfile(request);
+
+        ApiResponseDTO response = new ApiResponseDTO("Profile successfully updated", updatedUser);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/dashboard")
+    public ResponseEntity<UserDashboardDTO> getUserDashboard(){
+        return ResponseEntity.ok(userService.getUserDashboard());
     }
 }

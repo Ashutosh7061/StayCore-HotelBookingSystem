@@ -3,6 +3,7 @@ package com.ashutosh.HotelBookingSystem.controller;
 
 import com.ashutosh.HotelBookingSystem.Enum.CancelledBy;
 import com.ashutosh.HotelBookingSystem.dto.*;
+import com.ashutosh.HotelBookingSystem.repository.RoomRepository;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
 import com.ashutosh.HotelBookingSystem.service.HotelService;
 import com.ashutosh.HotelBookingSystem.service.RoomService;
@@ -22,13 +23,14 @@ public class HotelController {
     private final HotelService hotelService;
     private final BookingService bookingService;
     private final RoomService roomService;
+    private final RoomRepository roomRepository;
 
 
     @PreAuthorize("hasRole('HOTEL')")
     @PostMapping("/addRoom")
     public ResponseEntity<ApiResponseDTO> addRoom(@RequestBody AddRoomRequestDTO room){
 
-        AddRoomResponseDTO  addedRoom = roomService.addRoom(room);
+        RoomResponseDTO addedRoom = roomService.addRoom(room);
         ApiResponseDTO response = new ApiResponseDTO("Room added successfully", addedRoom);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -84,4 +86,36 @@ public class HotelController {
         return hotelService.getHotelDashboard();
     }
 
+    @PreAuthorize("hasRole('HOTEL')")
+    @GetMapping("/profile")
+    public HotelProfileResponseDTO getHotelProfile(){
+        return hotelService.getHotelProfile();
+    }
+
+    @PreAuthorize("hasRole('HOTEL')")
+    @PutMapping("/profile")
+    public ApiResponseDTO getHotelProfile(@RequestBody HotelProfileUpdateDTO request){
+
+        HotelProfileResponseDTO updatedDetails = hotelService.updateHotelProfile(request);
+
+        ApiResponseDTO response = new ApiResponseDTO("Profile updated successfully", updatedDetails);
+
+        return response;
+    }
+
+    @PreAuthorize("hasRole('HOTEL')")
+    @PutMapping("/update/{roomNo}")
+    public ApiResponseDTO updateRoomDetails(@PathVariable String roomNo,@RequestBody RoomUpdateDTO request){
+
+        RoomResponseDTO updatedRoom = roomService.updateRoom(roomNo, request);
+        ApiResponseDTO response = new ApiResponseDTO("Room Updated Successfully", updatedRoom);
+
+        return response;
+    }
+
+    @PreAuthorize("hasRole('HOTEL')")
+    @DeleteMapping("/delete/{roomNo}")
+    public String deleteRoom(@PathVariable String roomNo){
+        return roomService.deleteRoom(roomNo);
+    }
 }
