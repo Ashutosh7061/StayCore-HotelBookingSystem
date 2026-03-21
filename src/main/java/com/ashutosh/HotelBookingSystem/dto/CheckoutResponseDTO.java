@@ -13,7 +13,5 @@ public class CheckoutResponseDTO {
     private Long bookingId;
     private String status;
     private String roomCondition;
-    private Integer rating;
-    private String review;
     private LocalDateTime checkoutTime;
 }

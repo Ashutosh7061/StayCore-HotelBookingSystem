@@ -23,4 +23,7 @@ public class UserDashboardRecentBookingDTO {
     private BookingStatus status;
 
     private Double totalPrice;
+
+    private Double refundAmount;
+    private Double deductionAmount;
 }

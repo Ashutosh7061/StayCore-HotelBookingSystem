@@ -1,6 +1,6 @@
 package com.ashutosh.HotelBookingSystem.Enum;
 
 public enum IdType {
-    AADHAR,
+    AADHAAR,
     VOTER_CARD
 }

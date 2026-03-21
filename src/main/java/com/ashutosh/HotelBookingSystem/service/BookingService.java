@@ -5,15 +5,9 @@ import com.ashutosh.HotelBookingSystem.Enum.CancelledBy;
 import com.ashutosh.HotelBookingSystem.Enum.HotelStatus;
 import com.ashutosh.HotelBookingSystem.Enum.RoomStatus;
 import com.ashutosh.HotelBookingSystem.dto.*;
-import com.ashutosh.HotelBookingSystem.entity.Booking;
-import com.ashutosh.HotelBookingSystem.entity.Hotel;
-import com.ashutosh.HotelBookingSystem.entity.Room;
-import com.ashutosh.HotelBookingSystem.entity.User;
+import com.ashutosh.HotelBookingSystem.entity.*;
 import com.ashutosh.HotelBookingSystem.exception.*;
-import com.ashutosh.HotelBookingSystem.repository.BookingRepository;
-import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
-import com.ashutosh.HotelBookingSystem.repository.RoomRepository;
-import com.ashutosh.HotelBookingSystem.repository.UserRepository;
+import com.ashutosh.HotelBookingSystem.repository.*;
 import com.ashutosh.HotelBookingSystem.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,8 +19,8 @@ import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +31,8 @@ public class BookingService {
     private final HotelRepository hotelRepository;
     private final UserRepository userRepository;
     private final HotelService hotelService;
+    private final CancellationTransactionRepository cancellationTransactionRepository;
+    private final ReviewRepository reviewRepository;
 
 
     @Transactional
@@ -93,7 +89,7 @@ public class BookingService {
 
 
         List<Room> availableRooms = roomRepository
-                        .findByHotel_IdAndRoomTypeAndStatus(request.getHotelId(), request.getRoomType(), RoomStatus.VACENT);
+                        .findByHotel_IdAndRoomTypeAndStatus(request.getHotelId(), request.getRoomType(), RoomStatus.VACANT);
 
         if(availableRooms.size() < request.getNoOfRooms()){
             throw new DataNotFoundException("Not enough rooms available, there are only "+ availableRooms.size()+" rooms available");
@@ -103,15 +99,16 @@ public class BookingService {
         double pricePerRoom = availableRooms.get(0).getPrice();
         double totalPrice = pricePerRoom * days * request.getNoOfRooms();
 
-        //Updating rooms status
-        List<String> allottedRooms = new ArrayList<>();
 
-        for(int i = 0 ; i < request.getNoOfRooms() ; i++){
-            Room room = availableRooms.get(i);
+        List<Room> roomsToBook = availableRooms.stream()
+                .limit(request.getNoOfRooms())
+                .toList();
+
+        for(Room room : roomsToBook){
             room.setStatus(RoomStatus.BOOKED);
-
-            allottedRooms.add(room.getRoomNumber());
         }
+
+        roomRepository.saveAll(roomsToBook);
 
         Booking booking = new Booking();
 
@@ -126,7 +123,6 @@ public class BookingService {
         booking.setTotalPrice(totalPrice);
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setBookingTime(LocalDateTime.now());
-        booking.setAllottedRoomNumber(allottedRooms);
 
         Booking savedBooking = bookingRepository.save(booking);
 
@@ -327,6 +323,7 @@ public class BookingService {
         if (bookings.isEmpty()) {
             throw new DataNotFoundException("No booking found for status " + status);
         }
+
         return bookings.stream()
                 .map(booking -> {
 
@@ -348,24 +345,30 @@ public class BookingService {
                     switch (booking.getStatus()){
 
                         case CANCELLED:
+                            CancellationTransaction tx = cancellationTransactionRepository.findByBookingId(booking.getId())
+                                    .orElseThrow(()-> new DataNotFoundException("Cancellation record not found for booking id: "+ booking.getId()));
+
                             return new CancelledUserPerHotelResponseDTO(
                                     user.getId(),
                                     user.getName(),
                                     user.getEmail(),
                                     user.getPhoneNo(),
                                     user.getCreatedAt(),
-                                    booking.getCancelledBy(),
-                                    booking.getCancellationReason()
+                                    tx.getCancelledBy(),
+                                    tx.getCancellationReason()
                             );
                         case COMPLETED:
+                            Review review = reviewRepository.findByBooking_Id(booking.getId())
+                                    .orElseThrow(()-> new DataNotFoundException("Review not found"));
+
                             return new CompletedUserPerHotelResponseDTO(
                                     user.getId(),
                                     user.getName(),
                                     user.getEmail(),
                                     user.getPhoneNo(),
                                     user.getCreatedAt(),
-                                    booking.getReview(),
-                                    booking.getRating()
+                                    review.getComment(),
+                                    review.getRating()
                             );
                         case CONFIRMED:
                             return new ConfirmedUserPerHotelResponseDTO(
@@ -406,6 +409,11 @@ public class BookingService {
                 .orElseThrow(()-> new DataNotFoundException("Booking not found for this given id."));
 
 
+        // Prevent duplicate cancellation
+        if(cancellationTransactionRepository.findByBookingId(bookingId).isPresent()){
+            throw new InvalidBookingStateException("Cancellation already processed for this booking");
+        }
+
         if(role.equals("USER")){
             if(!booking.getUser().getId().equals(referenceId)){
                 throw new UnauthorizedAccessException("You can cancel yours own bookings.");
@@ -422,6 +430,7 @@ public class BookingService {
                 throw new BookingValidationException("Invalid cancellation type for hotel");
             }
         }
+
         if(booking.getStatus() == BookingStatus.CANCELLED){
             throw new InvalidBookingStateException("Booking already cancelled");
         }
@@ -430,8 +439,12 @@ public class BookingService {
             throw new InvalidBookingStateException("Completed booking cannot be cancelled");
         }
 
+        double totalPrice= booking.getTotalPrice();
         double deduction = 0;
-        double refund = booking.getTotalPrice();
+        double refund =totalPrice;
+        double deductionPercentage = 0;
+
+        CancellationTransaction tx = new CancellationTransaction();
 
         if(cancelledBy == CancelledBy.USER){
 
@@ -439,7 +452,6 @@ public class BookingService {
             LocalDate checkInDate = booking.getCheckInDate();
 
             long daysBetween = ChronoUnit.DAYS.between(today, checkInDate);
-            double deductionPercentage;
 
             if(daysBetween < 0){
                 throw new InvalidBookingStateException("Cannot cancel after check-in date");
@@ -455,11 +467,10 @@ public class BookingService {
                 deductionPercentage = 0.0;
             }
 
-            double totalPrice = booking.getTotalPrice();
             deduction = totalPrice * deductionPercentage;
             refund = totalPrice - deduction;
 
-            booking.setCancellationReason(null);
+            tx.setCancellationReason(null);
         }
 
         if(cancelledBy == CancelledBy.HOTEL){
@@ -470,13 +481,27 @@ public class BookingService {
                 throw new BookingValidationException("Cancellation reason requires when hotel cancels booking");
             }
             deduction = 0;
-            refund = booking.getTotalPrice();
-            booking.setCancellationReason(reason);
+            refund = totalPrice;
+            deductionPercentage = 0;
+
+            tx.setCancellationReason(reason);
             //In future credits to be added
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
-        booking.setCancelledBy(cancelledBy);
+        bookingRepository.save(booking);
+
+        // Save cancellation transaction
+        tx.setBookingId(booking.getId());
+        tx.setBookingReferenceId(booking.getBookingReferenceId());
+        tx.setOriginalAmount(totalPrice);
+        tx.setDeductionAmount(deduction);
+        tx.setRefundAmount(refund);
+        tx.setDeductionPercentage(deductionPercentage);
+        tx.setCancelledBy(cancelledBy);
+        tx.setCancellationTime(LocalDateTime.now());
+
+        cancellationTransactionRepository.save(tx);
 
         List<Room> rooms;
 
@@ -491,7 +516,7 @@ public class BookingService {
                 throw new IllegalStateException("Not enough booked rooms found to release");
             }
             for(int i = 0; i < booking.getNumberOfRooms(); i++){
-                rooms.get(i).setStatus(RoomStatus.VACENT);
+                rooms.get(i).setStatus(RoomStatus.VACANT);
             }
         }
 
@@ -503,12 +528,11 @@ public class BookingService {
                     roomNumbers
             );
             for(Room room : rooms){
-                room.setStatus(RoomStatus.VACENT);
+                room.setStatus(RoomStatus.VACANT);
             }
         }
 
         roomRepository.saveAll(rooms);
-        bookingRepository.save(booking);
 
 
         return new CancellationResponseDTO(
@@ -527,19 +551,31 @@ public class BookingService {
         List<Booking> bookings = bookingRepository.findByStatus(BookingStatus.COMPLETED);
 
         return bookings.stream()
-                .map(booking -> new AdminBookingDetailsDTO(
-                     booking.getId(),
-                     booking.getUser().getId(),
-                     booking.getUser().getName(),
-                     booking.getHotel().getId(),
-                     booking.getHotel().getHotelName(),
-                     booking.getTotalPrice(),
-                     booking.getStatus(),
-                     booking.getRating(),
-                     booking.getReview()
-                ))
+                .map(booking -> {
+
+                    Optional<Review> reviewOpt = reviewRepository.findByBooking_Id(booking.getId());
+                    Integer rating = null;
+                    String comment = null;
+
+                    if(reviewOpt.isPresent()){
+                        rating = reviewOpt.get().getRating();
+                        comment = reviewOpt.get().getComment();
+                    }
+                    return new AdminBookingDetailsDTO(
+                            booking.getId(),
+                            booking.getUser().getId(),
+                            booking.getUser().getName(),
+                            booking.getHotel().getId(),
+                            booking.getHotel().getHotelName(),
+                            booking.getTotalPrice(),
+                            booking.getStatus(),
+                            rating,
+                            comment
+                    );
+                })
                 .toList();
     }
+
 
     public  String generateBookingReferenceId(){
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

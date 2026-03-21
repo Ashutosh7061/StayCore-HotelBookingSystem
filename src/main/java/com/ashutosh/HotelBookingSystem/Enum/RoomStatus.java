@@ -1,7 +1,7 @@
 package com.ashutosh.HotelBookingSystem.Enum;
 
 public enum RoomStatus {
-    VACENT,
+    VACANT,
     BOOKED,
     OCCUPIED
 }

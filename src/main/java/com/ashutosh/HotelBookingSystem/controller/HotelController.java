@@ -64,14 +64,24 @@ public class HotelController {
 
     @PreAuthorize("hasRole('HOTEL')")
     @PutMapping("/checkout")
-    public ResponseEntity<CheckoutResponseDTO> checkout(@RequestBody CheckOutRequestDTO request){
-        return ResponseEntity.ok(hotelService.checkout(request));
+    public ResponseEntity<ApiResponseDTO> checkout(@RequestBody CheckOutRequestDTO request){
+
+        CheckoutResponseDTO checkOut = hotelService.checkout(request);
+
+        ApiResponseDTO response = new ApiResponseDTO("Check-out successful", checkOut);
+
+        return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasRole('HOTEL')")
     @PostMapping("/check-in")
-    public ResponseEntity<CheckInResponseDTO> checkIn(@RequestBody CheckInRequestDTO request){
-        return ResponseEntity.ok(hotelService.checkIn(request));
+    public ResponseEntity<ApiResponseDTO> checkIn(@RequestBody CheckInRequestDTO request){
+
+        CheckInResponseDTO checkIn = hotelService.checkIn(request);
+
+        ApiResponseDTO response = new ApiResponseDTO("Check-in successful", checkIn);
+
+        return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasRole('HOTEL')")

@@ -10,7 +10,6 @@ import com.ashutosh.HotelBookingSystem.entity.Room;
 import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
 import com.ashutosh.HotelBookingSystem.exception.DuplicateDataException;
 import com.ashutosh.HotelBookingSystem.exception.RoomNotModifiableException;
-import com.ashutosh.HotelBookingSystem.exception.UnauthorizedAccessException;
 import com.ashutosh.HotelBookingSystem.repository.HotelRepository;
 import com.ashutosh.HotelBookingSystem.repository.RoomRepository;
 import com.ashutosh.HotelBookingSystem.security.CustomUserDetails;
@@ -91,7 +90,7 @@ public class RoomService {
         Room room = roomRepository.findByHotel_IdAndRoomNumber(hotelId, roomNo)
                 .orElseThrow(()-> new DataNotFoundException("Room not found"));
 
-        if(room.getStatus() != RoomStatus.VACENT){
+        if(room.getStatus() != RoomStatus.VACANT){
             throw new RoomNotModifiableException("You can not modify the room, until it is vacant");
         }
 
@@ -122,7 +121,7 @@ public class RoomService {
         Room room = roomRepository.findByHotel_IdAndRoomNumber(hotelId, roomNo)
                 .orElseThrow(()-> new DataNotFoundException("Room not found"));
 
-        if(room.getStatus() != RoomStatus.VACENT){
+        if(room.getStatus() != RoomStatus.VACANT){
             throw new RoomNotModifiableException("You can not modify the room, until it is vacant");
         }
         roomRepository.delete(room);

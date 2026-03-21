@@ -24,7 +24,7 @@ public class helperFunctions {
 
     public static void validateGovernmentId(IdType idType, String uniqueIdNumber) {
 
-        if (idType == IdType.AADHAR) {
+        if (idType == IdType.AADHAAR) {
             if (!uniqueIdNumber.matches("\\d{12}")) {
                 throw new InvalidIdNumberException(
                         "Aadhaar must be exactly 12 digits"

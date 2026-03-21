@@ -3,10 +3,13 @@ package com.ashutosh.HotelBookingSystem.service;
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.dto.*;
 import com.ashutosh.HotelBookingSystem.entity.Booking;
+import com.ashutosh.HotelBookingSystem.entity.CancellationTransaction;
+import com.ashutosh.HotelBookingSystem.entity.Review;
 import com.ashutosh.HotelBookingSystem.entity.User;
-import com.ashutosh.HotelBookingSystem.exception.DataNotFoundException;
-import com.ashutosh.HotelBookingSystem.exception.DuplicateDataException;
+import com.ashutosh.HotelBookingSystem.exception.*;
 import com.ashutosh.HotelBookingSystem.repository.BookingRepository;
+import com.ashutosh.HotelBookingSystem.repository.CancellationTransactionRepository;
+import com.ashutosh.HotelBookingSystem.repository.ReviewRepository;
 import com.ashutosh.HotelBookingSystem.repository.UserRepository;
 import com.ashutosh.HotelBookingSystem.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +18,7 @@ import org.springframework.stereotype.Service;
 import com.ashutosh.HotelBookingSystem.Mapper.helperFunctions;
 
 
-
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -24,6 +27,8 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
+    private final CancellationTransactionRepository cancellationTransactionRepository;
+    private final ReviewRepository reviewRepository;
 
     public List<User> getAllUsers(){
         return userRepository.findAll();
@@ -117,16 +122,32 @@ public class UserService {
         // Filling RecentBookingsStats
         List<UserDashboardRecentBookingDTO> recentBookingsStats = bookings.stream()
                 .limit(3)
-                .map(b-> {
-                    UserDashboardRecentBookingDTO dto = new UserDashboardRecentBookingDTO(
-                            b.getBookingReferenceId(),
-                            b.getHotel().getHotelName(),
-                            b.getRoomType(),
-                            b.getCheckInDate(),
-                            b.getCheckOutDate(),
-                            b.getStatus(),
-                            b.getTotalPrice()
-                    );
+                .sorted((a, b) -> b.getBookingTime().compareTo(a.getBookingTime()))
+                .map(b -> {
+
+                    UserDashboardRecentBookingDTO dto = new UserDashboardRecentBookingDTO();
+
+                    dto.setBookingReferenceId(b.getBookingReferenceId());
+                    dto.setHotelName(b.getHotel().getHotelName());
+                    dto.setRoomType(b.getRoomType());
+                    dto.setCheckInDate(b.getCheckInDate());
+                    dto.setCheckOutDate(b.getCheckOutDate());
+                    dto.setStatus(b.getStatus());
+                    dto.setTotalPrice(b.getTotalPrice());
+
+                    if (b.getStatus() == BookingStatus.CANCELLED) {
+
+                        CancellationTransaction tx =
+                                cancellationTransactionRepository
+                                        .findByBookingId(b.getId())
+                                        .orElse(null);
+
+                        if (tx != null) {
+                            dto.setRefundAmount(tx.getRefundAmount());
+                            dto.setDeductionAmount(tx.getDeductionAmount());
+                        }
+                    }
+
                     return dto;
 
                 }).toList();
@@ -136,6 +157,51 @@ public class UserService {
                  bookingStats,
                  recentBookingsStats
          );
+    }
+
+    public ReviewResponseDTO addReview(ReviewRequestDTO request){
+
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Long userId = loggedUser.getReferenceId();
+
+        Booking booking = bookingRepository.findById(request.getBookingId())
+                .orElseThrow(()-> new DataNotFoundException("Booking not found"));
+
+
+        if(!booking.getUser().getId().equals(userId)){
+            throw new UnauthorizedAccessException("You can only review your own bookings");
+        }
+
+        if(booking.getStatus() != BookingStatus.COMPLETED){
+            throw new InvalidOperationException("You can review only after checkout");
+        }
+
+        if(reviewRepository.existsByBooking_Id(booking.getId())){
+            throw new InvalidOperationException("Review already submitted");
+        }
+
+        if(request.getRating() == null || request.getRating() < 1 || request.getRating() > 5){
+            throw new InvalidRatingException("Rating must be between 1 and 5");
+        }
+
+        Review review =new Review();
+        review.setBooking(booking);
+        review.setUser(booking.getUser());
+        review.setHotel(booking.getHotel());
+        review.setRating(request.getRating());
+        review.setComment(review.getComment());
+        review.setCreatedAt(LocalDateTime.now());
+
+        reviewRepository.save(review);
+
+        return new ReviewResponseDTO(
+                review.getId(),
+                booking.getId(),
+                review.getRating(),
+                review.getComment(),
+                review.getCreatedAt()
+        );
     }
 
     private UserProfileResponseDTO mapUserToProfileDTO(User user){

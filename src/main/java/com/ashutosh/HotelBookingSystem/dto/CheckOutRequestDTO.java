@@ -10,9 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CheckOutRequestDTO {
     private Long bookingId;
-    private Long userId;
-    private String uniqueIdNumber;
-    private String review;
-    private Integer rating;
+    private String bookingReferenceId;
+
     private String roomCondition;
 }

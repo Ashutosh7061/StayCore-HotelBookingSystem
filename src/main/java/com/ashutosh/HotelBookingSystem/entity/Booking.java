@@ -54,17 +54,6 @@ public class Booking {
     @ElementCollection
     private List<String> allottedRoomNumber;
 
-    // For cancellation
-
-    @Enumerated(EnumType.STRING)
-    private CancelledBy cancelledBy;
-
-    private String cancellationReason;
-
-    // for check-out
-    private Integer rating;
-    private String review;
-
     @JsonFormat(pattern = "MM-dd-yyyy HH:mm:ss")
     private LocalDateTime checkoutTime;
 

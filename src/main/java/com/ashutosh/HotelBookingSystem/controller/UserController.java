@@ -90,4 +90,16 @@ public class UserController {
     public ResponseEntity<UserDashboardDTO> getUserDashboard(){
         return ResponseEntity.ok(userService.getUserDashboard());
     }
+
+
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("/review")
+    public ResponseEntity<ApiResponseDTO> addReview(@RequestBody ReviewRequestDTO request){
+
+        ReviewResponseDTO review = userService.addReview(request);
+
+        ApiResponseDTO response = new ApiResponseDTO("Review submitted successfully", review);
+
+        return ResponseEntity.ok(response);
+    }
 }
