@@ -7,10 +7,13 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BookingStatsDTO {
+public class AdminBookingStatsDTO {
     private Long totalRooms;
     private Long totalBooking;
     private Long confirmedBooking;
     private Long completedBooking;
     private Long cancelledBooking;
+
+    private Long onlineBookings;
+    private Long offlineBookings;
 }

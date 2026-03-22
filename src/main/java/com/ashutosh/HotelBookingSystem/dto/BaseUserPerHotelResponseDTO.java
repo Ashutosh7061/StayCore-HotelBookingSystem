@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 public class BaseUserPerHotelResponseDTO {
 
     private Long userId;
+    private String customerType;
+
     private String name;
     private String email;
     private String phoneNo;

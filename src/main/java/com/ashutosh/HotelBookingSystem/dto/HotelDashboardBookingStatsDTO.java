@@ -1,15 +1,18 @@
 package com.ashutosh.HotelBookingSystem.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.ashutosh.HotelBookingSystem.Enum.BookingSource;
+import lombok.*;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
+@Getter
+@Setter
 public class HotelDashboardBookingStatsDTO {
     private Long totalBookings;
     private Long confirmedBookings;
     private Long completedBookings;
     private Long cancelledBookings;
+
+    private Long onlineBooking;
+    private Long offlineBooking;
 }

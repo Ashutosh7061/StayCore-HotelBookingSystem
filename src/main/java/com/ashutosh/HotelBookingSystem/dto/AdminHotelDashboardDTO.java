@@ -7,10 +7,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AdminHotelDetailsDTO {
+public class AdminHotelDashboardDTO {
 
-    private HotelFullInfoDTO hotelInfo;
-    private BookingStatsDTO bookingStats;
-    private FinancialStatsDTO financialStats;
+    private AdminHotelFullInfoDTO hotelInfo;
+    private AdminBookingStatsDTO bookingStats;
+    private AdminFinancialStatsDTO financialStats;
 
 }

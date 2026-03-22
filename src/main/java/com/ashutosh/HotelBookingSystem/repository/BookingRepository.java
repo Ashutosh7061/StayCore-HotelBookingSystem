@@ -1,6 +1,8 @@
 package com.ashutosh.HotelBookingSystem.repository;
 
+import com.ashutosh.HotelBookingSystem.Enum.BookingSource;
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
+import com.ashutosh.HotelBookingSystem.dto.BookingStatsProjection;
 import com.ashutosh.HotelBookingSystem.entity.Booking;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -68,13 +70,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByStatus(BookingStatus status);
 
-
-//    @Query("""
-//       SELECT COALESCE(AVG(b.rating), 0)
-//       FROM Booking b
-//       WHERE b.hotel.id = :hotelId
-//       AND b.rating IS NOT NULL
-//       """)
     long countByStatus(BookingStatus status);
 
     long countByHotelId(Long hotelId);
@@ -93,5 +88,42 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     Optional<Booking> findByBookingReferenceId(String bookingReferenceId);
 
     long countByUser_Id(Long userId);
+
+    @Query("""
+    SELECT b FROM Booking b
+    LEFT JOIN b.user u
+    WHERE b.hotel.id = :hotelId
+    AND b.roomType = :roomType
+    AND b.status IN ('CONFIRMED','CHECKED_IN')
+    AND (
+        u.uniqueIdNumber = :idNumber
+        OR b.guestIdNumber = :idNumber
+    )
+    AND (
+        :checkInDate < b.checkOutDate AND :checkOutDate > b.checkInDate
+    )
+    """)
+    List<Booking> findDuplicateByIdentity(Long hotelId, String roomType,
+            LocalDate checkInDate, LocalDate checkOutDate, String idNumber
+    );
+
+    long countByBookingSource(BookingSource bookingSource);
+
+    long countByHotel_IdAndBookingSource(Long hotelId, BookingSource bookingSource);
+
+    @Query("""
+    SELECT 
+        COUNT(b) as totalBookings,
+
+        SUM(CASE WHEN b.status = 'CONFIRMED' THEN 1 ELSE 0 END) as confirmedBookings,
+        SUM(CASE WHEN b.status = 'COMPLETED' THEN 1 ELSE 0 END) as completedBookings,
+        SUM(CASE WHEN b.status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelledBookings,
+
+        SUM(CASE WHEN b.bookingSource = 'ONLINE' THEN 1 ELSE 0 END) as onlineBookings,
+        SUM(CASE WHEN b.bookingSource = 'OFFLINE' THEN 1 ELSE 0 END) as offlineBookings
+
+    FROM Booking b
+""")
+    BookingStatsProjection getBookingStats();
 
 }

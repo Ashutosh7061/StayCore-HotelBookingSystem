@@ -64,6 +64,7 @@ public class RoomService {
     }
 
     public List<AdminRoomDTO> getRoomsByHotel(Long hotelId){
+        
         Hotel hotel = hotelRepository.findById(hotelId)
                 .orElseThrow(()-> new DataNotFoundException("Hotel not found for this id."));
 

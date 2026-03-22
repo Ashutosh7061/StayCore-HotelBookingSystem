@@ -24,4 +24,6 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT r FROM Room r WHERE r.hotel.id = :hotelId AND r.roomType = :roomType AND r.status = :status")
     List<Room> findAvailableRoomsForUpdate(Long hotelId, String roomType, RoomStatus status);
+
+    long countByHotel_IdAndRoomType(Long hotelId, String roomType);
 }

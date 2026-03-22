@@ -22,10 +22,7 @@ public class PublicController {
     private final RoomService roomService;
     private final AuthService authService;
 
-//    @PostMapping("/registerUser")
-//    public User registerUser(@RequestBody User user){
-//        return userService.registerUser(user);
-//    }
+
      @PostMapping("/registerUser")
      public String registerUser(@RequestBody UserSignupRequestDTO request){
         return authService.registerUser(request);

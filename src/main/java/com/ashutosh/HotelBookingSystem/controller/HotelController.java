@@ -118,6 +118,7 @@ public class HotelController {
     public ApiResponseDTO updateRoomDetails(@PathVariable String roomNo,@RequestBody RoomUpdateDTO request){
 
         RoomResponseDTO updatedRoom = roomService.updateRoom(roomNo, request);
+
         ApiResponseDTO response = new ApiResponseDTO("Room Updated Successfully", updatedRoom);
 
         return response;
@@ -127,5 +128,11 @@ public class HotelController {
     @DeleteMapping("/delete/{roomNo}")
     public String deleteRoom(@PathVariable String roomNo){
         return roomService.deleteRoom(roomNo);
+    }
+
+    @PreAuthorize("hasRole('HOTEL')")
+    @PostMapping("/bookings/offline")
+    public BookingResponseDTO offlineBooking(@RequestBody HotelOfflineBookingRequestDTO request){
+        return bookingService.offlineBooking(request);
     }
 }

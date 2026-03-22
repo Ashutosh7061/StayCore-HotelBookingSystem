@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class HotelFullInfoDTO {
+public class AdminHotelFullInfoDTO {
 
     private Long hotelId;
     private String hotelName;

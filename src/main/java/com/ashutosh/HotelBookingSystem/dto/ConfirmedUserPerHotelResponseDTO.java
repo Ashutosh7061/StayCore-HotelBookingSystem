@@ -18,6 +18,7 @@ public class ConfirmedUserPerHotelResponseDTO extends BaseUserPerHotelResponseDT
 
     public ConfirmedUserPerHotelResponseDTO(
             Long userId,
+            String customerType,
             String name,
             String email,
             String phoneNo,
@@ -26,7 +27,7 @@ public class ConfirmedUserPerHotelResponseDTO extends BaseUserPerHotelResponseDT
             LocalDate checkOutDate,
             int numberOfRooms
     ){
-        super(userId,name, email, phoneNo, createdAt);
+        super(userId,customerType, name, email, phoneNo, createdAt);
         this.checkInDate = checkInDate;
         this.checkOutDate = checkOutDate;
         this.numberOfRooms = numberOfRooms;

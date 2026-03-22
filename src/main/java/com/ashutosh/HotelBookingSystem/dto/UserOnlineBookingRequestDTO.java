@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserBookingRequestDTO {
+public class UserOnlineBookingRequestDTO {
     private Long hotelId;
     private String roomType;
     private int noOfRooms;

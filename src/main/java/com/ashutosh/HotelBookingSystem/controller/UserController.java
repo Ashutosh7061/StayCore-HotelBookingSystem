@@ -32,7 +32,7 @@ public class UserController {
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/make-booking")
-    public ResponseEntity<ApiResponseDTO> bookRoom(@RequestBody UserBookingRequestDTO request){
+    public ResponseEntity<ApiResponseDTO> bookRoom(@RequestBody UserOnlineBookingRequestDTO request){
         BookingResponseDTO  addedRoom = bookingService.bookRoom(request);
         ApiResponseDTO response = new ApiResponseDTO("Your booking is successfully completed", addedRoom);
 

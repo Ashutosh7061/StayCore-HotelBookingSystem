@@ -9,4 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class HotelDashboardRoomStatsDTO {
     private Long totalRooms;
+
+    private Long singleRoomCount;
+    private Long doubleRoomCount;
+    private Long deluxeRoomCount;
 }

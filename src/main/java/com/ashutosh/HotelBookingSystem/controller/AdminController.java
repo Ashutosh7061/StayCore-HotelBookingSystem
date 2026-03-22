@@ -36,7 +36,7 @@ public class AdminController {
     }
 
     @GetMapping("/hotel/{hotelId}")
-    public ResponseEntity<AdminHotelDetailsDTO> getSpecificHotel(@PathVariable Long hotelId){
+    public ResponseEntity<AdminHotelDashboardDTO> getSpecificHotelDetails(@PathVariable Long hotelId){
         return ResponseEntity.ok(adminService.getSpecificHotelDetails(hotelId));
     }
 
@@ -57,8 +57,13 @@ public class AdminController {
     }
 
     @GetMapping("/hotel/{hotelId}/allRooms")
-    public List<AdminRoomDTO> getRooms(@PathVariable Long hotelId){
-        return roomService.getRoomsByHotel(hotelId);
+    public ApiResponseDTO getRooms(@PathVariable Long hotelId){
+
+        List<AdminRoomDTO> rooms = roomService.getRoomsByHotel(hotelId);
+
+        int roomCount = rooms.size();
+
+        return new ApiResponseDTO("Total rooms: "+roomCount ,rooms);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

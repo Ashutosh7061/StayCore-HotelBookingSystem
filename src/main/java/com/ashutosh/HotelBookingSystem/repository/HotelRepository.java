@@ -17,4 +17,6 @@ public interface HotelRepository extends JpaRepository<Hotel,Long> {
     boolean existsByEmail(String email);
 
     List<Hotel> findByStatus(HotelStatus status);
+
+    long countByStatus(HotelStatus hotelStatus);
 }

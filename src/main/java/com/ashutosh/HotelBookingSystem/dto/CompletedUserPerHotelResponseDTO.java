@@ -9,6 +9,7 @@ public class CompletedUserPerHotelResponseDTO extends BaseUserPerHotelResponseDT
 
     public CompletedUserPerHotelResponseDTO(
             Long userId,
+            String customerType,
             String name,
             String email,
             String phoneNo,
@@ -16,7 +17,7 @@ public class CompletedUserPerHotelResponseDTO extends BaseUserPerHotelResponseDT
             String review,
             Integer rating) {
 
-        super(userId, name, email, phoneNo, createdAt);
+        super(userId,customerType, name, email, phoneNo, createdAt);
         this.review = review;
         this.rating = rating;
     }

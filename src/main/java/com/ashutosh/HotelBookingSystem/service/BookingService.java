@@ -1,9 +1,6 @@
 package com.ashutosh.HotelBookingSystem.service;
 
-import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
-import com.ashutosh.HotelBookingSystem.Enum.CancelledBy;
-import com.ashutosh.HotelBookingSystem.Enum.HotelStatus;
-import com.ashutosh.HotelBookingSystem.Enum.RoomStatus;
+import com.ashutosh.HotelBookingSystem.Enum.*;
 import com.ashutosh.HotelBookingSystem.dto.*;
 import com.ashutosh.HotelBookingSystem.entity.*;
 import com.ashutosh.HotelBookingSystem.exception.*;
@@ -36,7 +33,7 @@ public class BookingService {
 
 
     @Transactional
-    public BookingResponseDTO bookRoom(UserBookingRequestDTO request){
+    public BookingResponseDTO bookRoom(UserOnlineBookingRequestDTO request){
 
         CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext()
                         .getAuthentication()
@@ -124,6 +121,9 @@ public class BookingService {
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setBookingTime(LocalDateTime.now());
 
+        booking.setIsWalkIn(false);
+        booking.setBookingSource(BookingSource.ONLINE);
+
         Booking savedBooking = bookingRepository.save(booking);
 
         return new BookingResponseDTO(
@@ -187,7 +187,7 @@ public class BookingService {
                             addressDTO,
                             days,
                             booking.getNumberOfRooms(),
-                           booking.getStatus().name(),
+                            booking.getStatus().name(),
                             booking.getBookingTime()
                     );
                 })
@@ -215,11 +215,15 @@ public class BookingService {
                             booking.getCheckOutDate()
                     );
 
+                    String name = getCustomerName(booking);
+                    String phoneNo = getCustomerPhone(booking);
+
                     return new HotelBookingSummaryDTO(
                             booking.getId(),
                             booking.getBookingReferenceId(),
-                            booking.getUser().getName(),
-                            booking.getUser().getPhoneNo(),
+                            booking.getBookingSource(),
+                            name,
+                            phoneNo,
                             booking.getCheckInDate(),
                             booking.getCheckOutDate(),
                             booking.getRoomType(),
@@ -241,15 +245,17 @@ public class BookingService {
                 .orElseThrow(()-> new DataNotFoundException("Booking not found with given id"));
 
         if(!booking.getHotel().getId().equals(hotelId)){
-            throw new UnauthorizedAccessException("You are not allowed to access this booking");
+            throw new UnauthorizedAccessException("This booking does not exist in your hotel.");
         }
 
         HotelSpecificBookingDetailsDTO response = new HotelSpecificBookingDetailsDTO();
 
         response.setBookingId(booking.getId());
-        response.setUserName(booking.getUser().getName());
-        response.setUserPhoneNo(booking.getUser().getPhoneNo());
-        response.setUserEmail(booking.getUser().getEmail());
+        response.setUserName(getCustomerName(booking));
+        response.setUserPhoneNo(getCustomerPhone(booking));
+        response.setUserEmail(getCustomerEmail(booking));
+
+        response.setBookingSource(booking.getBookingSource());
 
         response.setCheckInDate(booking.getCheckInDate());
         response.setCheckOutDate(booking.getCheckOutDate());
@@ -266,8 +272,6 @@ public class BookingService {
     }
 
 
-
-
     public BookingSummaryDTO getBookingSummary(Long bookingId){
 
         CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -278,9 +282,10 @@ public class BookingService {
                 .orElseThrow(()-> new DataNotFoundException("Booking not found for this bookingId."));
 
 
-        if(!booking.getUser().getId().equals(userId)){
-            throw new UnauthorizedAccessException("You are not allowed to view this bookings.");
+        if(booking.getUser() == null || !booking.getUser().getId().equals(userId)){
+            throw new UnauthorizedAccessException("This booking does not exist in your hotel.");
         }
+
         int days = helperFunctions.calculateDays(booking);
 
         String fullAddress = booking.getHotel().getAddressLine()+ ", "+
@@ -327,15 +332,28 @@ public class BookingService {
         return bookings.stream()
                 .map(booking -> {
 
-                    User user = booking.getUser();
+                    String name = getCustomerName(booking);
+                    String phone = getCustomerPhone(booking);
+                    String email = getCustomerEmail(booking);
+
+                    Long userId = booking.getUser() != null ? booking.getUser().getId() : null;
+
+                    LocalDateTime createdAt = booking.getUser() != null
+                            ? booking.getUser().getCreatedAt()
+                            : booking.getBookingTime();
+
+                    String customerType = Boolean.TRUE.equals(booking.getIsWalkIn())
+                            ? "GUEST"
+                            : "USER";
 
                     if(status == null){
                         return new ConfirmedUserPerHotelResponseDTO(
-                          user.getId(),
-                          user.getName(),
-                          user.getEmail(),
-                          user.getPhoneNo(),
-                          user.getCreatedAt(),
+                          userId,
+                          customerType,
+                          name,
+                          email,
+                          phone,
+                          createdAt,
                           booking.getCheckInDate(),
                           booking.getCheckOutDate(),
                           booking.getNumberOfRooms()
@@ -343,17 +361,17 @@ public class BookingService {
                     }
 
                     switch (booking.getStatus()){
-
                         case CANCELLED:
                             CancellationTransaction tx = cancellationTransactionRepository.findByBookingId(booking.getId())
                                     .orElseThrow(()-> new DataNotFoundException("Cancellation record not found for booking id: "+ booking.getId()));
 
                             return new CancelledUserPerHotelResponseDTO(
-                                    user.getId(),
-                                    user.getName(),
-                                    user.getEmail(),
-                                    user.getPhoneNo(),
-                                    user.getCreatedAt(),
+                                    userId,
+                                    customerType,
+                                    name,
+                                    email,
+                                    phone,
+                                    createdAt,
                                     tx.getCancelledBy(),
                                     tx.getCancellationReason()
                             );
@@ -362,21 +380,23 @@ public class BookingService {
                                     .orElseThrow(()-> new DataNotFoundException("Review not found"));
 
                             return new CompletedUserPerHotelResponseDTO(
-                                    user.getId(),
-                                    user.getName(),
-                                    user.getEmail(),
-                                    user.getPhoneNo(),
-                                    user.getCreatedAt(),
+                                    userId,
+                                    customerType,
+                                    name,
+                                    email,
+                                    phone,
+                                    createdAt,
                                     review.getComment(),
                                     review.getRating()
                             );
                         case CONFIRMED:
                             return new ConfirmedUserPerHotelResponseDTO(
-                                    user.getId(),
-                                    user.getName(),
-                                    user.getEmail(),
-                                    user.getPhoneNo(),
-                                    user.getCreatedAt(),
+                                    userId,
+                                    customerType,
+                                    name,
+                                    email,
+                                    phone,
+                                    createdAt,
                                     booking.getCheckInDate(),
                                     booking.getCheckOutDate(),
                                     booking.getNumberOfRooms()
@@ -384,11 +404,12 @@ public class BookingService {
 
                         default:
                             return new BaseUserPerHotelResponseDTO(
-                                    user.getId(),
-                                    user.getName(),
-                                    user.getEmail(),
-                                    user.getPhoneNo(),
-                                    user.getCreatedAt()
+                                    userId,
+                                    customerType,
+                                    name,
+                                    email,
+                                    phone,
+                                    createdAt
                             );
                     }
                 })
@@ -429,6 +450,9 @@ public class BookingService {
             if(cancelledBy != CancelledBy.HOTEL){
                 throw new BookingValidationException("Invalid cancellation type for hotel");
             }
+        }
+        if(booking.getStatus() == BookingStatus.CHECKED_IN){
+            throw new BookingCancellationException("Checked-in booking cannot be cancelled");
         }
 
         if(booking.getStatus() == BookingStatus.CANCELLED){
@@ -534,7 +558,6 @@ public class BookingService {
 
         roomRepository.saveAll(rooms);
 
-
         return new CancellationResponseDTO(
                 booking.getId(),
                 cancelledBy.name(),
@@ -561,10 +584,24 @@ public class BookingService {
                         rating = reviewOpt.get().getRating();
                         comment = reviewOpt.get().getComment();
                     }
+
+                    Long userId = booking.getUser() != null ? booking.getUser().getId() : null;
+
+                    String name;
+
+                    if(Boolean.TRUE.equals(booking.getIsWalkIn())){
+                        name = booking.getGuestName();
+                    } else if(booking.getUser() != null){
+                        name = booking.getUser().getName();
+                    } else {
+                        name = "Unknown"; // fallback safety
+                    }
+
+
                     return new AdminBookingDetailsDTO(
                             booking.getId(),
-                            booking.getUser().getId(),
-                            booking.getUser().getName(),
+                            userId,
+                            name,
                             booking.getHotel().getId(),
                             booking.getHotel().getHotelName(),
                             booking.getTotalPrice(),
@@ -594,4 +631,135 @@ public class BookingService {
 
         return bookingReferenceId;
     }
+
+
+    public BookingResponseDTO offlineBooking(HotelOfflineBookingRequestDTO request){
+
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
+
+        Long hotelId = loggedUser.getReferenceId();
+
+        LocalDate checkInDate = request.getCheckInDate();
+        LocalDate checkOutDate = request.getCheckOutDate();
+
+        Hotel hotel = hotelRepository.findById(hotelId)
+                .orElseThrow(()-> new DataNotFoundException("Hotel not found"));
+
+        //check hotel status
+        if(hotel.getStatus() != HotelStatus.APPROVED){
+            throw new UnauthorizedAccessException("Hotel temporarily unavailable for new bookings");
+        }
+
+        String idNumber = request.getGuestIdNumber();
+
+        List<Booking> existingBookings =
+                bookingRepository.findDuplicateByIdentity(
+                        hotelId,
+                        request.getRoomType(),
+                        checkInDate,
+                        checkOutDate,
+                        idNumber
+                );
+
+        if (!existingBookings.isEmpty()) {
+            throw new DuplicateDataException("Guest already has booking for same dates");
+        }
+
+        if(checkOutDate.isBefore(checkInDate) || checkOutDate.isEqual(checkInDate)){
+            throw new InvalidCheckOutDateException("Invalid check-out date, please provide correct check-out date.");
+        }
+        if(checkInDate.isBefore(LocalDate.now())){
+            throw new InvalidCheckOutDateException("Check-in date must be valid");
+        }
+
+        long days = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
+
+
+        List<Room> availableRooms = roomRepository
+                .findByHotel_IdAndRoomTypeAndStatus(hotelId, request.getRoomType(), RoomStatus.VACANT);
+
+        if(availableRooms.size() < request.getNoOfRooms()){
+            throw new DataNotFoundException("Only "+ availableRooms.size()+" rooms available");
+        }
+
+        //Price calculation
+        double pricePerRoom = availableRooms.get(0).getPrice();
+        double totalPrice = pricePerRoom * days * request.getNoOfRooms();
+
+        List<Room> roomsToBook = availableRooms.stream()
+                .limit(request.getNoOfRooms())
+                .toList();
+
+        for(Room room : roomsToBook){
+            room.setStatus(RoomStatus.BOOKED);
+        }
+
+        roomRepository.saveAll(roomsToBook);
+
+        Booking booking = new Booking();
+
+        booking.setUser(null);
+
+        booking.setGuestName(request.getGuestName());
+        booking.setGuestPhoneNo(request.getGuestPhoneNo());
+        booking.setGuestEmail(request.getGuestEmail());
+        booking.setGuestIdType(request.getGuestIdType());
+        booking.setGuestIdNumber(request.getGuestIdNumber());
+        booking.setGuestAddress(request.getGuestAddress());
+
+        booking.setIsWalkIn(true);
+        booking.setBookingSource(BookingSource.OFFLINE);
+
+        booking.setBookingReferenceId(generateBookingReferenceId());
+        booking.setHotel(hotel);
+        booking.setRoomType(request.getRoomType());
+        booking.setNumberOfRooms(request.getNoOfRooms());
+        booking.setCheckInDate(checkInDate);
+        booking.setCheckOutDate(checkOutDate);
+        booking.setTotalPrice(totalPrice);
+        booking.setStatus(BookingStatus.CONFIRMED);
+        booking.setBookingTime(LocalDateTime.now());
+
+        Booking savedBooking = bookingRepository.save(booking);
+
+        return new BookingResponseDTO(
+                savedBooking.getId(),
+                savedBooking.getBookingReferenceId(),
+                hotel.getId(),
+                hotel.getHotelName(),
+                (int)days,
+                request.getNoOfRooms(),
+                savedBooking.getCheckInInstruction(),
+                savedBooking.getCheckInDate(),
+                savedBooking.getCheckOutDate(),
+                totalPrice,
+                savedBooking.getStatus().name(),
+                savedBooking.getBookingTime()
+        );
+
+    }
+
+    // For getting user/guest name and phoneNumber.
+    private String getCustomerName(Booking booking){
+        if(Boolean.TRUE.equals(booking.getIsWalkIn())){
+            return booking.getGuestName();
+        }
+        return booking.getUser() != null ? booking.getUser().getName() : "Unknown";
+    }
+
+    private String getCustomerPhone(Booking booking){
+        if(Boolean.TRUE.equals(booking.getIsWalkIn())){
+            return booking.getGuestPhoneNo();
+        }
+        return booking.getUser() != null ? booking.getUser().getPhoneNo() : "N/A";
+    }
+    private String getCustomerEmail(Booking booking){
+        if(Boolean.TRUE.equals(booking.getIsWalkIn())){
+            return booking.getGuestEmail();
+        }
+        return booking.getUser() != null ? booking.getUser().getEmail() : null;
+    }
+
 }

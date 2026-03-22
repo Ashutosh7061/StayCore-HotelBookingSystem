@@ -1,8 +1,8 @@
 package com.ashutosh.HotelBookingSystem.dto;
 
 
+import com.ashutosh.HotelBookingSystem.Enum.BookingSource;
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
-import com.ashutosh.HotelBookingSystem.service.BookingService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,6 +21,7 @@ public class HotelSpecificBookingDetailsDTO {
     private String userPhoneNo;
     private String userEmail;
 
+    private BookingSource bookingSource;
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
 

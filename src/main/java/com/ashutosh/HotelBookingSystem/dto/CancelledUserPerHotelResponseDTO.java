@@ -15,13 +15,14 @@ public class CancelledUserPerHotelResponseDTO extends BaseUserPerHotelResponseDT
     public CancelledUserPerHotelResponseDTO(
             Long userId,
             String name,
+            String customerType,
             String email,
             String phoneNo,
             LocalDateTime createdAt,
             CancelledBy cancelledBy,
             String cancellationReason) {
 
-        super(userId, name, email, phoneNo, createdAt);
+        super(userId, customerType,name, email, phoneNo, createdAt);
         this.cancelledBy = cancelledBy;
         this.cancellationReason = cancellationReason;
     }

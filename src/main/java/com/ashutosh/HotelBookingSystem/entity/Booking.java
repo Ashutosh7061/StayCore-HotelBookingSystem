@@ -1,9 +1,9 @@
 package com.ashutosh.HotelBookingSystem.entity;
 
+import com.ashutosh.HotelBookingSystem.Enum.BookingSource;
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
-import com.ashutosh.HotelBookingSystem.Enum.CancelledBy;
+import com.ashutosh.HotelBookingSystem.Enum.IdType;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -42,9 +42,8 @@ public class Booking {
     private String checkInInstruction;
 
     // RelationShip Creation
-
     @ManyToOne
-    @JoinColumn(name = "user_id",nullable = false)
+    @JoinColumn(name = "user_id",nullable = true)
     private User user;
 
     @ManyToOne
@@ -58,5 +57,26 @@ public class Booking {
     private LocalDateTime checkoutTime;
 
     private String roomCondition;
+
+    //for offline
+    @Column(nullable = false)
+    private String guestName;
+    @Column(nullable = false)
+    private String guestPhoneNo;
+    @Column(nullable = false)
+    private String guestAddress;
+    private String guestEmail;
+
+    @Enumerated(EnumType.STRING)
+    private IdType guestIdType;
+
+    @Column(nullable = false)
+    private String guestIdNumber;
+
+    @Enumerated(EnumType.STRING)
+    private BookingSource bookingSource;
+
+    private Boolean isWalkIn;
+
 
 }

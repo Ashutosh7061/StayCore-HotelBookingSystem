@@ -1,5 +1,6 @@
 package com.ashutosh.HotelBookingSystem.service;
 
+import com.ashutosh.HotelBookingSystem.Enum.BookingSource;
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.Enum.HotelStatus;
 import com.ashutosh.HotelBookingSystem.Enum.RoomStatus;
@@ -121,7 +122,11 @@ public class HotelService {
             throw new BookingCheckInException("Check-in not allowed on/after checkout date");
         }
 
-        if(!booking.getUser().getUniqueIdNumber().equals(request.getUniqueIdNumber())){
+        String idToVerify = Boolean.TRUE.equals(booking.getIsWalkIn())
+                ? booking.getGuestIdNumber()
+                : booking.getUser().getUniqueIdNumber();
+
+        if(!idToVerify.equals(request.getUniqueIdNumber())){
             throw new InvalidIdNumberException("Invalid ID proof");
         }
 
@@ -165,9 +170,13 @@ public class HotelService {
         booking.setAllottedRoomNumber(assignedRoom);
         booking.setStatus(BookingStatus.CHECKED_IN);
 
+        String name = Boolean.TRUE.equals(booking.getIsWalkIn())
+                ? booking.getGuestName()
+                : booking.getUser().getName();
+
         return new CheckInResponseDTO(
                 booking.getId(),
-                booking.getUser().getName(),
+                name,
                 assignedRoom,
                 LocalDateTime.now(),
                 booking.getCheckInInstruction()
@@ -185,10 +194,6 @@ public class HotelService {
                 .getPrincipal();
 
         Long hotelId = loggedUser.getReferenceId();
-
-//        if(!loggedUser.getRole().equals("HOTEL")){
-//            throw new UnauthorizedAccessException("Only hotel can perform checkout");
-//        }
 
         Booking booking;
         if(request.getBookingId() != null){
@@ -228,12 +233,14 @@ public class HotelService {
 
 
         List<String> roomNumber = booking.getAllottedRoomNumber();
-        List<Room> rooms = roomRepository.findByHotel_Id(booking.getHotel().getId());
+
+        List<Room> rooms = roomRepository.findByHotel_IdAndRoomNumberIn(
+                booking.getHotel().getId(),
+                roomNumber
+        );
 
         for(Room room : rooms){
-            if(roomNumber.contains(room.getRoomNumber())){
-                room.setStatus(RoomStatus.VACANT);
-            }
+            room.setStatus(RoomStatus.VACANT);
         }
 
         commissionService.addBookingCommission(booking,booking.getHotel());
@@ -251,17 +258,7 @@ public class HotelService {
         if(hotel.getStatus() != HotelStatus.APPROVED){
             throw new UnauthorizedAccessException("Hotel is not approved for doing activities");
         }
-//        if(hotel.getStatus() == HotelStatus.PENDING){
-//            throw new UnauthorizedAccessException("Hotel account is pending approval by admin");
-//        }
-//
-//        if(hotel.getStatus() == HotelStatus.REJECTED){
-//            throw new UnauthorizedAccessException("Hotel application was rejected. Please reapply");
-//        }
-//
-//        if(hotel.getStatus() == HotelStatus.BLOCKED){
-//            throw new UnauthorizedAccessException("Hotel account has been blocked by platform");
-//        }
+
     }
 
     public List<Hotel> getAllAvailableHotels() {
@@ -315,15 +312,27 @@ public class HotelService {
                 hotel.getCreatedAt()
         );
 
+        Long singleRoomCount = roomRepository.countByHotel_IdAndRoomType(hotelId,"SINGLE");
+        Long doubleRoomCount = roomRepository.countByHotel_IdAndRoomType(hotelId, "DOUBLE");
+        Long deluxeRoomCount = roomRepository.countByHotel_IdAndRoomType(hotelId, "DELUXE");
+
         HotelDashboardRoomStatsDTO roomInfo = new HotelDashboardRoomStatsDTO(
-                totalRooms
+                totalRooms,
+                singleRoomCount,
+                doubleRoomCount,
+                deluxeRoomCount
         );
+
+        Long onlineBooking = bookingRepository.countByHotel_IdAndBookingSource(hotelId, BookingSource.ONLINE);
+        Long offlineBooking = bookingRepository.countByHotel_IdAndBookingSource(hotelId, BookingSource.OFFLINE);
 
         HotelDashboardBookingStatsDTO bookingInfo = new HotelDashboardBookingStatsDTO(
                 totalBooking,
                 confirmedBookings,
                 completedBookings,
-                cancelledBooking
+                cancelledBooking,
+                onlineBooking,
+                offlineBooking
         );
 
         HotelDashboardFinancialStatsDTO financialInfo = new HotelDashboardFinancialStatsDTO(

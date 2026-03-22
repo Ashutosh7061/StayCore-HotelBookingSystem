@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class HotelDashboardDTO {
+
     private HotelDashboardInfoDTO hotelInfo;
     private HotelDashboardRoomStatsDTO roomStats;
     private HotelDashboardBookingStatsDTO bookingStats;

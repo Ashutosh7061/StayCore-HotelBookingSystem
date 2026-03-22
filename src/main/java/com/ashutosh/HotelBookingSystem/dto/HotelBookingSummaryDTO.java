@@ -1,5 +1,6 @@
 package com.ashutosh.HotelBookingSystem.dto;
 
+import com.ashutosh.HotelBookingSystem.Enum.BookingSource;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,8 @@ public class HotelBookingSummaryDTO {
 
     private Long bookingId;
     private String bookingReferenceId;
+    private BookingSource bookingSource;
+
     private String userName;
     private String userPhoneNO;
 

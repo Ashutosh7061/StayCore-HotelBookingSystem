@@ -31,6 +31,7 @@ public class AdminService {
     private final SupportMessageRepository supportMessageRepository;
     private final RoomRepository roomRepository;
 
+
     public List<AdminUserDetailsDTO> getAllUsersForAdmin(){
 
         List<User> users = userRepository.findAll();
@@ -55,7 +56,7 @@ public class AdminService {
                 .toList();
     }
 
-    public AdminHotelDetailsDTO getSpecificHotelDetails(Long hotelId) {
+    public AdminHotelDashboardDTO getSpecificHotelDetails(Long hotelId) {
 
         Long totalBooking = (Long)bookingRepository.countByHotelId(hotelId);
 
@@ -87,7 +88,7 @@ public class AdminService {
                 hotel.getPinCode()
         );
 
-        HotelFullInfoDTO hotelInfo = new HotelFullInfoDTO(
+        AdminHotelFullInfoDTO hotelInfo = new AdminHotelFullInfoDTO(
                 hotel.getId(),
                 hotel.getHotelName(),
                 hotel.getRegisteredOwnerName(),
@@ -100,49 +101,83 @@ public class AdminService {
                 hotel.getCreatedAt()
         );
 
-        BookingStatsDTO bookingStats = new BookingStatsDTO(
+        Long onlineBookings = bookingRepository.countByHotel_IdAndBookingSource(hotelId,BookingSource.ONLINE);
+        Long offlineBookings = bookingRepository.countByHotel_IdAndBookingSource(hotelId,BookingSource.OFFLINE);
+
+        AdminBookingStatsDTO bookingStats = new AdminBookingStatsDTO(
                 totalRooms,
                 totalBooking,
                 confirmedBookings,
                 completedBookings,
-                cancelledBooking
+                cancelledBooking,
+                onlineBookings,
+                offlineBookings
         );
 
-        FinancialStatsDTO financialStats = new FinancialStatsDTO(
+        AdminFinancialStatsDTO financialStats = new AdminFinancialStatsDTO(
                 totalBookingRevenue,
                 totalCommission,
                 bookingCommission,
                 registrationCommission
         );
 
-        return new AdminHotelDetailsDTO(
+        return new AdminHotelDashboardDTO(
           hotelInfo,
           bookingStats,
           financialStats
         );
-
     }
 
     public PlatformDashboardDTO getPlatformDashboard() {
 
-        Long totalCompletedBookings =
-                bookingRepository.countByStatus(BookingStatus.COMPLETED);
+        Long approvedHotels = hotelRepository.countByStatus(HotelStatus.APPROVED);
+        Long pendingHotels = hotelRepository.countByStatus(HotelStatus.PENDING);
+        Long blockedHotels = hotelRepository.countByStatus(HotelStatus.BLOCKED);
+        Long rejectedHotels = hotelRepository.countByStatus(HotelStatus.BLOCKED);
+        Long totalHotels = approvedHotels + pendingHotels + blockedHotels;
 
-        Double registrationCommission =
-                commissionRepository.getTotalByType(CommissionType.REGISTRATION);
+        PlatformHotelCountStatsDTO hotelStats = new PlatformHotelCountStatsDTO(
+                totalHotels,
+                approvedHotels,
+                pendingHotels,
+                blockedHotels,
+                rejectedHotels
+        );
 
-        Double bookingCommission =
-                commissionRepository.getTotalByType(CommissionType.BOOKING);
+        BookingStatsProjection stats = bookingRepository.getBookingStats();
 
-        Double totalPlatformEarnings =
-                registrationCommission + bookingCommission;
+        Long totalBooking = stats.getTotalBookings();
+        Long totalConfirmedBookings = stats.getConfirmedBookings();
+        Long totalCompletedBookings = stats.getCompletedBookings();
+        Long totalCancelledBooking = stats.getCancelledBookings();
 
-        return new PlatformDashboardDTO(
-                "WELCOME to ADMIN PANEL",
+        Long onlineBooking = stats.getOnlineBookings();
+        Long offlineBooking = stats.getOfflineBookings();
+
+        PlatformBookingStats bookingStats = new PlatformBookingStats(
+                totalBooking,
+                totalConfirmedBookings,
                 totalCompletedBookings,
+                totalCancelledBooking,
+                onlineBooking,
+                offlineBooking
+        );
+
+        Double registrationCommission = commissionRepository.getTotalByType(CommissionType.REGISTRATION);
+        Double bookingCommission = commissionRepository.getTotalByType(CommissionType.BOOKING);
+        Double totalPlatformEarnings = registrationCommission + bookingCommission;
+
+        PlatformRevenueStats revenueStats = new PlatformRevenueStats(
                 registrationCommission,
                 bookingCommission,
                 totalPlatformEarnings
+        );
+
+        return new PlatformDashboardDTO(
+                "WELCOME to ADMIN PANEL",
+                hotelStats,
+                bookingStats,
+                revenueStats
         );
     }
     

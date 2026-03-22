@@ -1,5 +1,6 @@
 package com.ashutosh.HotelBookingSystem.service;
 
+import com.ashutosh.HotelBookingSystem.Enum.BookingSource;
 import com.ashutosh.HotelBookingSystem.Enum.CommissionType;
 import com.ashutosh.HotelBookingSystem.entity.Booking;
 import com.ashutosh.HotelBookingSystem.entity.Commission;
@@ -30,7 +31,11 @@ public class CommissionService {
 
     public void addBookingCommission(Booking booking, Hotel hotel){
         double commissionPercentage = 0.10;
-        double commissionAmount = booking.getTotalPrice() * commissionPercentage;
+
+        double commissionAmount = 0;
+        if(booking.getBookingSource() == BookingSource.ONLINE){
+            commissionAmount = booking.getTotalPrice() * commissionPercentage;
+        }
 
         Commission commission = new Commission();
         commission.setAmount(commissionAmount);

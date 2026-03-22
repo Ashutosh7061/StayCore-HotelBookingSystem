@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class FinancialStatsDTO {
+public class AdminFinancialStatsDTO {
 
     private Double totalBookingRevenue;
     private Double totalCommission;
