@@ -25,9 +25,12 @@ public class UserController {
     private final UserService userService;
 
 
-    @GetMapping("/allAvailableHotels")
-    public List<Hotel> getAllAvailableHotels(){
-        return hotelService.getAllAvailableHotels();
+    @GetMapping("/hotels/available")
+    public List<AvailableHotelDTO> getHotels(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ){
+        return hotelService.getAllAvailableHotels(page, size);
     }
 
     @PreAuthorize("hasRole('USER')")

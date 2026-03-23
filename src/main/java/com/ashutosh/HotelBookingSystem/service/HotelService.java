@@ -14,6 +14,9 @@ import com.ashutosh.HotelBookingSystem.security.CustomUserDetails;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +25,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.util.stream.Collectors.toList;
 
 @Service
 @RequiredArgsConstructor
@@ -32,35 +37,77 @@ public class HotelService {
     private final RoomRepository roomRepository;
     private final CommissionService commissionService;
     private final CommissionRepository commissionRepository;
-    private final ReviewRepository reviewRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
 
-    public List<HotelResponseDTO> getAllHotels() {
-        List<Hotel> hotels = hotelRepository.findAll();
+    public List<AvailableHotelDTO> getAllAvailableHotels(int page, int size){
 
-        return hotels.stream()
-                .map(hotel -> {
+        Pageable pageable = PageRequest.of(page, size);
 
-                    AddressDTO addressDTO = new AddressDTO(
+        Page<Hotel> hotels = hotelRepository
+                .findByStatus(HotelStatus.APPROVED, pageable);
+
+
+        return hotels.getContent()
+                .stream()
+                .map(hotel ->{
+                    AddressDTO address = new AddressDTO(
                             hotel.getAddressLine(),
                             hotel.getCity(),
                             hotel.getState(),
                             hotel.getPinCode()
                     );
-                    return new HotelResponseDTO(
+
+                    List<Room> availableRooms = hotel.getRooms()
+                            .stream()
+                            .filter(room -> room.getStatus() == RoomStatus.VACANT)
+                            .toList();
+
+                    Double minPrice = availableRooms.stream()
+                            .map(Room::getPrice)
+                            .min(Double::compare)
+                            .orElse(null);
+
+                    List<String> roomTypes = availableRooms.stream()
+                            .map(Room::getRoomType)
+                            .distinct()
+                            .toList();
+
+                    return new AvailableHotelDTO(
                             hotel.getId(),
                             hotel.getHotelName(),
-                            addressDTO,
-                            hotel.getPhoneNo(),
-                            hotel.getCreatedAt(),
-                            hotel.getStatus()
+                            address,
+                            minPrice,
+                            roomTypes
+                    );
+                })
+                .filter(dto->dto.getMinPrice() != null)
+                .toList();
+    }
+
+    public List<AdminHotelListDTO> getHotelListForAdmin(){
+
+        List<Hotel> getAllHotels = hotelRepository.findAll();
+
+        return getAllHotels.stream()
+                .map(hotel->{
+                    AddressDTO address = new AddressDTO(
+                            hotel.getAddressLine(),
+                            hotel.getCity(),
+                            hotel.getState(),
+                            hotel.getPinCode()
+                    );
+                    return new AdminHotelListDTO(
+                      hotel.getId(),
+                      hotel.getHotelName(),
+                      address,
+                      hotel.getCreatedAt(),
+                      hotel.getStatus()
                     );
                 })
                 .toList();
     }
-
 
     public Hotel getHotelWithId(Long hotelId){
 

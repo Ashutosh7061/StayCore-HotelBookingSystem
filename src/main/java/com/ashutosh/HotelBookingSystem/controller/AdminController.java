@@ -11,6 +11,7 @@ import com.ashutosh.HotelBookingSystem.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,37 +26,44 @@ public class AdminController {
     private final BookingService bookingService;
     private final RoomService roomService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users")
     public List<AdminUserDetailsDTO> getAllUsers(){
         return adminService.getAllUsersForAdmin();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/hotels")
-    public List<HotelResponseDTO> getAllHotels(){
-        return hotelService.getAllHotels();
+    public List<AdminHotelListDTO> getAllHotels(){
+        return hotelService.getHotelListForAdmin();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/hotel/{hotelId}")
     public ResponseEntity<AdminHotelDashboardDTO> getSpecificHotelDetails(@PathVariable Long hotelId){
         return ResponseEntity.ok(adminService.getSpecificHotelDetails(hotelId));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/hotel/{hotelId}/users")
     public ResponseEntity<List<BaseUserPerHotelResponseDTO>> getAllUserOfHotelByStatus(
             @PathVariable Long hotelId, @RequestParam(required = false) BookingStatus status){
         return ResponseEntity.ok(bookingService.getAllUserOfHotelByStatus(hotelId,status));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/completed-bookings")
     public List<AdminBookingDetailsDTO> getCompletedBookings(){
         return bookingService.getCompletedBookingForAdmin();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/dashboard")
     public PlatformDashboardDTO getDashBoard(){
         return adminService.getPlatformDashboard();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/hotel/{hotelId}/allRooms")
     public ApiResponseDTO getRooms(@PathVariable Long hotelId){
 

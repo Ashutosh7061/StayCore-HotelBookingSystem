@@ -23,7 +23,6 @@ public class HotelController {
     private final HotelService hotelService;
     private final BookingService bookingService;
     private final RoomService roomService;
-    private final RoomRepository roomRepository;
 
 
     @PreAuthorize("hasRole('HOTEL')")
@@ -134,5 +133,16 @@ public class HotelController {
     @PostMapping("/bookings/offline")
     public BookingResponseDTO offlineBooking(@RequestBody HotelOfflineBookingRequestDTO request){
         return bookingService.offlineBooking(request);
+    }
+
+    @PreAuthorize("hasRole('HOTEL')")
+    @GetMapping("/rooms/available")
+    public ApiResponseDTO getAvailableRooms(@RequestParam String roomType){
+
+        List<AdminRoomDTO> availableRooms = roomService.getAvailableRooms(roomType);
+
+        int totalAvailableRooms = availableRooms.size();
+
+        return new ApiResponseDTO("Total rooms available : "+ totalAvailableRooms, availableRooms);
     }
 }

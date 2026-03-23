@@ -129,4 +129,27 @@ public class RoomService {
 
         return "Room deleted successfully";
     }
+
+    public List<AdminRoomDTO> getAvailableRooms(String roomType){
+
+        CustomUserDetails loggedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        Long hotelId = loggedUser.getReferenceId();
+
+        List<Room> rooms = roomRepository.findByHotel_IdAndRoomTypeAndStatus(hotelId,roomType,RoomStatus.VACANT);
+
+        if(rooms.isEmpty()){
+            throw new DataNotFoundException("No rooms available for type: "+ roomType);
+        }
+
+        return rooms.stream()
+                .map(room -> new AdminRoomDTO(
+                        room.getId(),
+                        room.getRoomNumber(),
+                        room.getRoomType(),
+                        room.getPrice(),
+                        room.getStatus().name()
+                )).toList();
+    }
+
 }
