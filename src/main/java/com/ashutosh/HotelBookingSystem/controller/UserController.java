@@ -3,7 +3,6 @@ package com.ashutosh.HotelBookingSystem.controller;
 import com.ashutosh.HotelBookingSystem.Enum.BookingStatus;
 import com.ashutosh.HotelBookingSystem.Enum.CancelledBy;
 import com.ashutosh.HotelBookingSystem.dto.*;
-import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.service.BookingService;
 import com.ashutosh.HotelBookingSystem.service.HotelService;
 import com.ashutosh.HotelBookingSystem.service.UserService;
@@ -26,10 +25,7 @@ public class UserController {
 
 
     @GetMapping("/hotels/available")
-    public List<AvailableHotelDTO> getHotels(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ){
+    public List<AvailableHotelDTO> getAvailableHotels(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size){
         return hotelService.getAllAvailableHotels(page, size);
     }
 

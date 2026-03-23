@@ -3,10 +3,7 @@ package com.ashutosh.HotelBookingSystem.controller;
 import com.ashutosh.HotelBookingSystem.dto.*;
 import com.ashutosh.HotelBookingSystem.entity.Hotel;
 import com.ashutosh.HotelBookingSystem.entity.User;
-import com.ashutosh.HotelBookingSystem.service.AuthService;
-import com.ashutosh.HotelBookingSystem.service.HotelService;
-import com.ashutosh.HotelBookingSystem.service.RoomService;
-import com.ashutosh.HotelBookingSystem.service.UserService;
+import com.ashutosh.HotelBookingSystem.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,10 +14,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PublicController {
 
-    private final UserService userService;
     private final HotelService hotelService;
     private final RoomService roomService;
     private final AuthService authService;
+    private final SearchService searchService;
 
 
      @PostMapping("/registerUser")
@@ -42,5 +39,22 @@ public class PublicController {
     public List<AdminRoomDTO> getRooms(@PathVariable Long hotelId){
         return roomService.getRoomsByHotel(hotelId);
     }
+
+    @GetMapping("/hotels/available")
+    public List<AvailableHotelDTO> getHotels(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size){
+        return hotelService.getAllAvailableHotels(page, size);
+    }
+
+    @GetMapping("/search")
+    public List<AvailableHotelDTO> searchHotel(@RequestParam String city,
+                                               @RequestParam(required = false) Double minPrice,
+                                               @RequestParam(required = false) Double maxPrice,
+                                               @RequestParam(required = false) String sort,
+                                               @RequestParam(defaultValue = "0")int page,
+                                               @RequestParam(defaultValue = "10")int size){
+         return searchService.searchByCity(city,minPrice, maxPrice,sort,page,size);
+    }
+
+
 
 }

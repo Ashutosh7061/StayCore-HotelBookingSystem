@@ -44,7 +44,6 @@ public class HotelService {
     public List<AvailableHotelDTO> getAllAvailableHotels(int page, int size){
 
         Pageable pageable = PageRequest.of(page, size);
-
         Page<Hotel> hotels = hotelRepository
                 .findByStatus(HotelStatus.APPROVED, pageable);
 
@@ -58,7 +57,6 @@ public class HotelService {
                             hotel.getState(),
                             hotel.getPinCode()
                     );
-
                     List<Room> availableRooms = hotel.getRooms()
                             .stream()
                             .filter(room -> room.getStatus() == RoomStatus.VACANT)
@@ -85,6 +83,8 @@ public class HotelService {
                 .filter(dto->dto.getMinPrice() != null)
                 .toList();
     }
+
+
 
     public List<AdminHotelListDTO> getHotelListForAdmin(){
 

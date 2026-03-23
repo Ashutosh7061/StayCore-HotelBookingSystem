@@ -68,7 +68,7 @@ public class RoomService {
         Hotel hotel = hotelRepository.findById(hotelId)
                 .orElseThrow(()-> new DataNotFoundException("Hotel not found for this id."));
 
-        List<Room> rooms = roomRepository.findByHotel_Id(hotelId);
+        List<Room> rooms = roomRepository.findByHotel_IdAndStatus(hotelId, RoomStatus.VACANT);
 
         return rooms.stream().
                 map(room ->new AdminRoomDTO(

@@ -23,4 +23,6 @@ public interface HotelRepository extends JpaRepository<Hotel,Long> {
     long countByStatus(HotelStatus hotelStatus);
 
     Page<Hotel> findByStatus(HotelStatus status, Pageable pageable);
+
+    Page<Hotel> findByStatusAndCityIgnoreCase(HotelStatus status, String city, Pageable pageable);
 }
